@@ -1,0 +1,9 @@
+/.stack-work
+/.hpc
+/*.cabal
+
+/main.wat
+/main.wasm
+
+/.idea
+/*.iml

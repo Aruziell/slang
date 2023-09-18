@@ -1,0 +1,34 @@
+name: slang
+version: 0.1.0.0
+github: aruziell/slang
+license-file: LICENSE
+author: Michał Golda
+
+synopsis: A fun project to learn Haskell & compilers.
+category: Compiler
+
+extra-source-files:
+  - README.md
+
+ghc-options: -Wall
+
+dependencies:
+  - base >= 4.7 && < 5
+
+executable:
+  main: Main.hs
+  source-dirs: app
+  dependencies:
+    - slang
+    - process
+
+library:
+  source-dirs: src
+
+tests:
+  slang-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+      - hspec
+      - slang
