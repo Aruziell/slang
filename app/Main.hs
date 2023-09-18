@@ -16,9 +16,9 @@ main = do
     let outputResultIO = fmap outputResult
 
     let tokenizeAction = noOutput $ tokenize input
-    token <- logAction "Tokenize" $ return tokenizeAction
+    tokens <- logAction "Tokenize" $ return tokenizeAction
 
-    let parseAction = noOutput $ parse token
+    let parseAction = noOutput $ parse $ head tokens
     ast <- logAction "Parse" $ return parseAction
 
     let generateWatAction = outputResult $ generateWat ast
