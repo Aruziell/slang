@@ -48,7 +48,7 @@ wasmtime file =
 
 logAction :: String -> IO (a, String) -> IO a
 logAction name action = do
-    let info message = "σ: " ++ message
+    let info message = "σ " ++ message
 
     putStr $ info name ++ ".."
     (result, output) <- action
