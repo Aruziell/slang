@@ -9,7 +9,7 @@ import CodeGenerator
 
 main :: IO ()
 main = do
-    let input = "1"
+    let input = "1 + 2 + 3 + 4 + 5"
     let noOutput result = (result, "")
     let noOutputIO = fmap noOutput
     let outputResult output = (output, output)
@@ -18,7 +18,7 @@ main = do
     let tokenizeAction = noOutput $ tokenize input
     tokens <- logAction "Tokenize" $ return tokenizeAction
 
-    let parseAction = noOutput $ parse $ head tokens
+    let parseAction = noOutput $ parse tokens
     ast <- logAction "Parse" $ return parseAction
 
     let generateWatAction = outputResult $ generateWat ast

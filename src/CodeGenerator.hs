@@ -7,11 +7,18 @@ generateWat :: S.Program -> String
 generateWat (S.Program expression) =
     "(module\n" ++
     "    (func (export \"_start\") (result i32)\n" ++
-    "        " ++ generateExpression expression ++ "\n" ++
+    join "        " "\n" (generateExpression expression) ++
     "    )\n" ++
     ")\n"
 
 
-generateExpression :: S.Expression -> String
+generateExpression :: S.Expression -> [String]
 generateExpression (S.IntegerLiteral value) =
-    "i32.const " ++ show value
+    ["i32.const " ++ show value]
+generateExpression (S.PlusOperator lhs rhs) =
+    ([lhs, rhs] >>= generateExpression) ++ ["i32.add"]
+
+
+join :: String -> String -> [String] -> String
+join prefix postfix content =
+    content >>= (prefix ++) . (++ postfix)

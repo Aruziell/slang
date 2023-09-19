@@ -4,7 +4,6 @@ import qualified Token as T
 
 
 tokenize :: String -> [T.Token]
-tokenize [] = []
 tokenize text = map tokenizeWord (words text)
 
 

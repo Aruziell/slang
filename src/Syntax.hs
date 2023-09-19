@@ -8,4 +8,5 @@ data Program
 
 data Expression
     = IntegerLiteral Int
+    | PlusOperator Expression Expression
     deriving (Eq, Show)
