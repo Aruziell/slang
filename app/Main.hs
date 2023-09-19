@@ -21,8 +21,8 @@ main = do
     let parseAction = noOutput $ parse tokens
     ast <- logAction "Parse" $ return parseAction
 
-    let generateWatAction = outputResult $ generateWat ast
-    wat <- logAction "Generate WAT" $ return generateWatAction
+    let generateWatAction = outputResult <$> generateWat <$> ast
+    wat <- logActionEither "Generate WAT" $ generateWatAction
 
     let writeFileAction = noOutputIO $ writeFile "main.wat" wat
     _ <- logAction "Write WAT file" writeFileAction
@@ -44,6 +44,30 @@ wat2wasm inputFile outputFile =
 wasmtime :: FilePath -> IO String
 wasmtime file =
     readProcess "wasmtime" [file] []
+
+
+errorMessage :: ParseError -> String
+errorMessage IncompleteExpression = "Incomplete expression."
+
+
+logActionEither :: String -> Either ParseError (a, String) -> IO a
+logActionEither name action = do
+    let info message = "σ " ++ message
+
+    putStr $ info name ++ ".."
+
+    case action of
+        Left err -> do
+            putStrLn " ✘"
+            fail $ errorMessage err
+        Right (result, output) -> do
+            putStrLn " ✔"
+            case output of
+                "" ->
+                    return result
+                _ -> do
+                    putStrLn . unlines $ map ("> " ++) (lines output)
+                    return result
 
 
 logAction :: String -> IO (a, String) -> IO a
