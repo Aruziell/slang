@@ -17,16 +17,16 @@ parse tokens = S.Program <$> parseExpression tokens
 
 
 parseExpression :: Parser S.Expression
-parseExpression [T.IntegerToken value] =
+parseExpression [T.Token (T.Integer value) _] =
     Right (S.IntegerLiteral value)
-parseExpression tokens@(T.IntegerToken _ : T.PlusToken : T.IntegerToken _ : _) =
+parseExpression tokens@(T.Token (T.Integer _) _ : T.Token T.Plus _ : T.Token (T.Integer _) _ : _) =
     parseAdd tokens
 parseExpression _ =
     Left IncompleteExpression
 
 
 parseAdd :: Parser S.Expression
-parseAdd (T.IntegerToken lhs : T.PlusToken : rest@(T.IntegerToken _ : _)) =
+parseAdd (T.Token (T.Integer lhs) _ : T.Token T.Plus _ : rest@(T.Token (T.Integer _) _ : _)) =
     S.PlusOperator (S.IntegerLiteral lhs) <$> (parseExpression rest)
 parseAdd _ =
     Left IncompleteExpression

@@ -12,21 +12,26 @@ import EitherExpectation
 spec :: Spec
 spec = do
     it "integer" $ do
-        parse [T.IntegerToken 1] `shouldBeRight` S.Program (S.IntegerLiteral 1)
+        parse [T.Token (T.Integer 1) _location]
+            `shouldBeRight` S.Program (S.IntegerLiteral 1)
 
     it "integer addition" $ do
-        parse [T.IntegerToken 1, T.PlusToken, T.IntegerToken 2]
-            `shouldBeRight` S.Program (
-                S.PlusOperator (S.IntegerLiteral 1) (S.IntegerLiteral 2)
-            )
+        parse
+            [ T.Token (T.Integer 1) _location
+            , T.Token T.Plus _location
+            , T.Token (T.Integer 2) _location
+            ]
+        `shouldBeRight` S.Program (
+            S.PlusOperator (S.IntegerLiteral 1) (S.IntegerLiteral 2)
+        )
 
     it "three integer addition" $ do
         parse
-            [ T.IntegerToken 1
-            , T.PlusToken
-            , T.IntegerToken 2
-            , T.PlusToken
-            , T.IntegerToken 3
+            [ T.Token (T.Integer 1) _location
+            , T.Token T.Plus _location
+            , T.Token (T.Integer 2) _location
+            , T.Token T.Plus _location
+            , T.Token (T.Integer 3) _location
             ]
         `shouldBeRight` S.Program (
             S.PlusOperator (S.IntegerLiteral 1) (
@@ -35,12 +40,16 @@ spec = do
         )
 
     it "missing left add operand" $ do
-        parse [T.PlusToken, T.IntegerToken 1]
+        parse [T.Token T.Plus _location, T.Token (T.Integer 1) _location]
             `shouldBe` Left IncompleteExpression
 
     it "missing right add operand" $ do
-        parse [T.IntegerToken 1, T.PlusToken]
+        parse [T.Token (T.Integer 1) _location, T.Token T.Plus _location]
             `shouldBe` Left IncompleteExpression
 
     it "missing both add operands" $ do
-        parse [T.PlusToken] `shouldBe` Left IncompleteExpression
+        parse [T.Token T.Plus _location] `shouldBe` Left IncompleteExpression
+
+
+_location :: T.Location 
+_location = T.Location 0 0
