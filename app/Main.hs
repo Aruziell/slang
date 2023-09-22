@@ -5,6 +5,7 @@ import System.Process
 import Tokenizer
 import Parser
 import CodeGenerator
+import Data.Bifunctor (first)
 
 
 main :: IO ()
@@ -15,11 +16,11 @@ main = do
     let outputResult output = (output, output)
     let outputResultIO = fmap outputResult
 
-    let tokenizeAction = noOutput $ tokenize input
-    tokens <- logAction "Tokenize" $ return tokenizeAction
+    let tokenizeAction = first TokenizeFailure $ tokenize input
+    tokens <- logActionEither "Tokenize" $ noOutput <$> tokenizeAction
 
-    let parseAction = noOutput $ parse tokens
-    ast <- logAction "Parse" $ return parseAction
+    let parseAction = noOutput $ first ParseFailure $ parse tokens
+    ast <- logActionEither "Parse" $ return parseAction
 
     let generateWatAction = outputResult <$> generateWat <$> ast
     wat <- logActionEither "Generate WAT" $ generateWatAction
@@ -46,11 +47,25 @@ wasmtime file =
     readProcess "wasmtime" [file] []
 
 
-errorMessage :: ParseError -> String
-errorMessage IncompleteExpression = "Incomplete expression."
+data SlangError
+    = TokenizeFailure TokenizeError
+    | ParseFailure ParseError
 
 
-logActionEither :: String -> Either ParseError (a, String) -> IO a
+errorMessage :: SlangError -> String
+errorMessage (TokenizeFailure err) = tokenizeErrorMessage err
+errorMessage (ParseFailure err) = parseErrorMessage err
+
+
+tokenizeErrorMessage :: TokenizeError -> String
+tokenizeErrorMessage (IllegalCharacter c) = "Illegal character " ++ [c]
+
+
+parseErrorMessage :: ParseError -> String
+parseErrorMessage IncompleteExpression = "Incomplete expression."
+
+
+logActionEither :: String -> Either SlangError (a, String) -> IO a
 logActionEither name action = do
     let info message = "σ " ++ message
 

@@ -1,24 +1,34 @@
-module Tokenizer (tokenize) where
+module Tokenizer (TokenizeError(..), tokenize) where
 
 import Data.Char (isDigit)
 
 import qualified Token as T
 
 
-tokenize :: String -> [T.Token]
+data TokenizeError
+    = IllegalCharacter Char
+    deriving (Eq, Show)
+
+
+type TokenizeResult = Either TokenizeError [T.Token]
+type Tokenizer = String -> TokenizeResult
+
+
+tokenize :: Tokenizer
 tokenize = tokenize_ startLocation
 
 
-tokenize_ :: T.Location -> String -> [T.Token]
-tokenize_ _ [] = []
-tokenize_ loc text@(c:rest)
-    | c == ' ' = [] ++ tokenize_ (advance loc) rest
-    | c == '+' = [T.Token T.Plus loc] ++ tokenize_ (advance loc) rest
+tokenize_ :: T.Location -> Tokenizer
+tokenize_ _ [] = Right []
+tokenize_ loc (' ' : rest) = tokenize_ (advance loc) rest
+tokenize_ loc ('+' : rest) = ([T.Token T.Plus loc] ++) <$> tokenize_ (advance loc) rest
+tokenize_ loc text@(c:_)
     | isDigit c =
-        let intString = takeWhile isDigit text
-            len = length intString
-            value = tokenizeInteger intString
-        in [T.Token value loc] ++ tokenize_ (advanceBy len loc) (drop len text)
+        let valueString = takeWhile isDigit text
+            len = length valueString
+            value = tokenizeInteger valueString
+        in ([T.Token value loc] ++) <$> tokenize_ (advanceBy len loc) (drop len text)
+tokenize_ _ (c:_) = Left (IllegalCharacter c)
 
 
 tokenizeInteger :: String -> T.Value
