@@ -2,6 +2,7 @@ module Main (main) where
 
 import System.Process
 
+import Token (Location(Location))
 import Tokenizer
 import Parser
 import CodeGenerator
@@ -47,6 +48,11 @@ wasmtime file =
     readProcess "wasmtime" [file] []
 
 
+locationToString :: Location -> String
+locationToString (Location line column) =
+    show line ++ ":" ++ show column
+
+
 data SlangError
     = TokenizeFailure TokenizeError
     | ParseFailure ParseError
@@ -58,7 +64,8 @@ errorMessage (ParseFailure err) = parseErrorMessage err
 
 
 tokenizeErrorMessage :: TokenizeError -> String
-tokenizeErrorMessage (IllegalCharacter c) = "Illegal character " ++ [c]
+tokenizeErrorMessage (IllegalCharacter c loc) =
+    "Illegal character " ++ [c] ++ " at " ++ locationToString loc
 
 
 parseErrorMessage :: ParseError -> String

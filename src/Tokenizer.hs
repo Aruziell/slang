@@ -6,7 +6,7 @@ import qualified Token as T
 
 
 data TokenizeError
-    = IllegalCharacter Char
+    = IllegalCharacter Char T.Location
     deriving (Eq, Show)
 
 
@@ -28,7 +28,7 @@ tokenize_ loc text@(c:_)
             len = length valueString
             value = tokenizeInteger valueString
         in ([T.Token value loc] ++) <$> tokenize_ (advanceBy len loc) (drop len text)
-tokenize_ _ (c:_) = Left (IllegalCharacter c)
+tokenize_ loc (c:_) = Left (IllegalCharacter c loc)
 
 
 tokenizeInteger :: String -> T.Value
