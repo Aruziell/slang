@@ -1,4 +1,6 @@
-module Token (Location(..), Token(..), Value(..)) where
+module Token (Token(..), Value(..)) where
+
+import Location
 
 
 data Token
@@ -9,12 +11,4 @@ data Token
 data Value
     = Integer Int
     | Plus
-    deriving (Eq, Show)
-
-
-data Location
-    = Location
-        { line :: Int
-        , column :: Int
-        }
     deriving (Eq, Show)

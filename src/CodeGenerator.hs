@@ -4,29 +4,29 @@ import qualified Syntax as S
 
 
 generateWat :: S.Program -> String
-generateWat (S.Program expression) =
+generateWat (S.Program (S.Expression value _)) =
     "(module\n" ++
     "    (func (export \"_start\") (result i32)\n" ++
-    join "        " "\n" (generateExpression expression) ++
+    join "        " "\n" (expressionValue value) ++
     "    )\n" ++
     ")\n"
 
 
-generateExpression :: S.Expression -> [String]
-generateExpression (S.IntegerLiteral value) =
+expressionValue :: S.Value -> [String]
+expressionValue (S.IntegerLiteral value) =
     _i32Const value
-generateExpression (S.PlusOperator lhs rhs) =
+expressionValue (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)) =
     -- While it is possible to generate both expressions and then add operator,
     -- we want to generate readable code. This way we'll have operator added
     -- as soon as stack contains enough operands.
-    generateExpression lhs ++ generatePlusRest rhs
+    expressionValue lhs ++ plusRest rhs
 
 
-generatePlusRest :: S.Expression -> [String]
-generatePlusRest (S.PlusOperator a b) =
-    generateExpression a ++ _i32Add ++ generatePlusRest b
-generatePlusRest expression =
-    generateExpression expression ++ _i32Add
+plusRest :: S.Value -> [String]
+plusRest (S.PlusOperator (S.Expression a _) (S.Expression b _)) =
+    expressionValue a ++ _i32Add ++ plusRest b
+plusRest value =
+    expressionValue value ++ _i32Add
 
 
 join :: String -> String -> [String] -> String

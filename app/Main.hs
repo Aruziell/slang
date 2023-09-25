@@ -2,7 +2,7 @@ module Main (main) where
 
 import System.Process
 
-import Token (Location(Location))
+import Location (Location(Location))
 import Tokenizer
 import Parser
 import CodeGenerator

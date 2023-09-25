@@ -17,8 +17,8 @@ parse tokens = S.Program <$> parseExpression tokens
 
 
 parseExpression :: Parser S.Expression
-parseExpression [T.Token (T.Integer value) _] =
-    Right (S.IntegerLiteral value)
+parseExpression [T.Token (T.Integer value) loc] =
+    Right (S.Expression (S.IntegerLiteral value) loc)
 parseExpression tokens@(T.Token (T.Integer _) _ : T.Token T.Plus _ : T.Token (T.Integer _) _ : _) =
     parseAdd tokens
 parseExpression _ =
@@ -26,7 +26,9 @@ parseExpression _ =
 
 
 parseAdd :: Parser S.Expression
-parseAdd (T.Token (T.Integer lhs) _ : T.Token T.Plus _ : rest@(T.Token (T.Integer _) _ : _)) =
-    S.PlusOperator (S.IntegerLiteral lhs) <$> (parseExpression rest)
+parseAdd (T.Token (T.Integer lhs) lLoc : T.Token T.Plus opLoc : rest@(T.Token (T.Integer _) _ : _)) = do
+    let left = S.Expression (S.IntegerLiteral lhs) lLoc
+    right <- parseExpression rest
+    Right $ S.Expression (S.PlusOperator left right) opLoc
 parseAdd _ =
     Left IncompleteExpression

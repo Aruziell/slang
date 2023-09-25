@@ -2,11 +2,12 @@ module Tokenizer (TokenizeError(..), tokenize) where
 
 import Data.Char (isDigit)
 
+import qualified Location as L (Location(..))
 import qualified Token as T
 
 
 data TokenizeError
-    = IllegalCharacter Char T.Location
+    = IllegalCharacter Char L.Location
     deriving (Eq, Show)
 
 
@@ -18,7 +19,7 @@ tokenize :: Tokenizer
 tokenize = tokenize_ startLocation
 
 
-tokenize_ :: T.Location -> Tokenizer
+tokenize_ :: L.Location -> Tokenizer
 tokenize_ _ [] = Right []
 tokenize_ loc (' ' : rest) = tokenize_ (advance loc) rest
 tokenize_ loc ('+' : rest) = ([T.Token T.Plus loc] ++) <$> tokenize_ (advance loc) rest
@@ -36,13 +37,13 @@ tokenizeInteger text =
     T.Integer (read text :: Int)
 
 
-startLocation :: T.Location
-startLocation = T.Location 0 0
+startLocation :: L.Location
+startLocation = L.Location { L.line = 0, L.column = 0 }
 
 
-advance :: T.Location -> T.Location
+advance :: L.Location -> L.Location
 advance = advanceBy 1
 
 
-advanceBy :: Int -> T.Location -> T.Location
-advanceBy cols loc = T.Location (T.line loc) (T.column loc + cols)
+advanceBy :: Int -> L.Location -> L.Location
+advanceBy cols loc = L.Location (L.line loc) (L.column loc + cols)
