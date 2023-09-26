@@ -22,6 +22,9 @@ spec = do
 
     it "multiple-digit integer" $ do
         tokenize "1000" `shouldBeRight` [T.Token (T.Integer 1000) (L.Location 0 0)]
+        
+    it "equals" $ do
+        tokenize "=" `shouldBeRight` [T.Token T.Equals (L.Location 0 0)]
 
     it "plus operator" $ do
         tokenize "+" `shouldBeRight` [T.Token T.Plus (L.Location 0 0)]

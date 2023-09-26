@@ -9,7 +9,8 @@ data Token
 
 
 data Value
-    = Integer Int
+    = Identifier String
+    | Integer Int
+    | Equals
     | Plus
-    | Identifier String
     deriving (Eq, Show)
