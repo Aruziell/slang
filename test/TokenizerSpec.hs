@@ -25,6 +25,11 @@ spec = do
 
     it "plus operator" $ do
         tokenize "+" `shouldBeRight` [T.Token T.Plus (L.Location 0 0)]
+    
+    it "identifier" $ do
+        tokenize "foo"
+        `shouldBeRight`
+            [ T.Token (T.Identifier "foo") (L.Location 0 0) ]
 
     it "integer addition" $ do
         tokenize "1 + 2" `shouldBeRight`

@@ -11,4 +11,5 @@ data Token
 data Value
     = Integer Int
     | Plus
+    | Identifier String
     deriving (Eq, Show)
