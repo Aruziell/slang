@@ -1,21 +1,33 @@
-module Syntax (Expression(..), Program(..), Value(..), int, plus) where
+module Syntax
+    ( Definition(..)
+    , Expression(..)
+    , ExpressionValue(..)
+    , Program(..)
+    , int
+    , plus
+    ) where
 
 import Location (Location)
 
 
 data Program
-    = Program Expression
+    = Program Definition
     deriving (Eq, Show)
 
 
 data Expression
-    = Expression Value Location
+    = Expression ExpressionValue Location
     deriving (Eq, Show)
 
 
-data Value
+data ExpressionValue
     = IntegerLiteral Int
     | PlusOperator Expression Expression
+    deriving (Eq, Show)
+
+
+data Definition
+    = Definition Location String Expression
     deriving (Eq, Show)
 
 

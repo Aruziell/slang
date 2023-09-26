@@ -1,12 +1,16 @@
 module Shorthand.Syntax where
 
 import Shorthand.Location
-import qualified Syntax as S
+import Syntax
 
 
-_int :: Int -> S.Expression
-_int value = S.int value _location
+_int :: Int -> Expression
+_int value = int value _location
 
 
-_plus :: S.Expression -> S.Expression -> S.Expression
-_plus l r = (l `S.plus` r) _location
+_def :: String -> Expression -> Definition
+_def = Definition _location
+
+
+_plus :: Expression -> Expression -> Expression
+_plus l r = (l `plus` r) _location

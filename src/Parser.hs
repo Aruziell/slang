@@ -1,4 +1,4 @@
-module Parser (ParseError(..), parse) where
+module Parser (ParseError(..), parse, parseExpression) where
 
 import qualified Syntax as S
 import qualified Token as T
@@ -8,12 +8,20 @@ type Parser a = [T.Token] -> Either ParseError a
 
 
 data ParseError
-    = IncompleteExpression
+    = IncompleteDefinition
+    | IncompleteExpression
     deriving (Eq, Show)
 
 
 parse :: Parser S.Program
-parse tokens = S.Program <$> parseExpression tokens
+parse tokens = S.Program <$> parseDefinition tokens
+
+
+parseDefinition :: Parser S.Definition
+parseDefinition (T.Token (T.Identifier name) loc : T.Token T.Equals _ : rest) =
+    S.Definition loc name <$> (parseExpression rest)
+parseDefinition _ =
+    Left IncompleteDefinition
 
 
 parseExpression :: Parser S.Expression

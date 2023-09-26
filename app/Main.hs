@@ -11,7 +11,7 @@ import Data.Bifunctor (first)
 
 main :: IO ()
 main = do
-    let input = "1 + 2 + 3 + 4 + 5"
+    let input = "sum = 1 + 2 + 3 + 4 + 5"
     let noOutput result = (result, "")
     let noOutputIO = fmap noOutput
     let outputResult output = (output, output)
@@ -23,7 +23,7 @@ main = do
     let parseAction = noOutput $ first ParseFailure $ parse tokens
     ast <- logActionEither "Parse" $ return parseAction
 
-    let generateWatAction = outputResult <$> generateWat <$> ast
+    let generateWatAction = outputResult <$> program <$> ast
     wat <- logActionEither "Generate WAT" $ generateWatAction
 
     let writeFileAction = noOutputIO $ writeFile "main.wat" wat
@@ -70,6 +70,7 @@ tokenizeErrorMessage (IllegalCharacter c loc) =
 
 parseErrorMessage :: ParseError -> String
 parseErrorMessage IncompleteExpression = "Incomplete expression."
+parseErrorMessage IncompleteDefinition = "Incomplete definition."
 
 
 logActionEither :: String -> Either SlangError (a, String) -> IO a

@@ -1,18 +1,31 @@
-module CodeGenerator (generateWat) where
+module CodeGenerator (program, expression) where
 
 import qualified Syntax as S
 
 
-generateWat :: S.Program -> String
-generateWat (S.Program (S.Expression value _)) =
+program :: S.Program -> String
+program (S.Program def) =
     "(module\n" ++
-    "    (func (export \"_start\") (result i32)\n" ++
-    join "        " "\n" (expressionValue value) ++
+    "    (func (export \"_start\")\n" ++
+--    join "        " "\n" (expressionValue value) ++
     "    )\n" ++
+    join _indent "\n" (definition def) ++
     ")\n"
 
 
-expressionValue :: S.Value -> [String]
+definition :: S.Definition -> [String]
+definition (S.Definition _ name expr) =
+    [ "(func $" ++ name ++ " (result i32)"
+    ] ++ map (_indent ++) (expression expr) ++
+    [ ")"
+    ]
+
+
+expression :: S.Expression -> [String]
+expression (S.Expression value _) = expressionValue value
+
+
+expressionValue :: S.ExpressionValue -> [String]
 expressionValue (S.IntegerLiteral value) =
     _i32Const value
 expressionValue (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)) =
@@ -22,7 +35,7 @@ expressionValue (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)) =
     expressionValue lhs ++ plusRest rhs
 
 
-plusRest :: S.Value -> [String]
+plusRest :: S.ExpressionValue -> [String]
 plusRest (S.PlusOperator (S.Expression a _) (S.Expression b _)) =
     expressionValue a ++ _i32Add ++ plusRest b
 plusRest value =
@@ -32,6 +45,10 @@ plusRest value =
 join :: String -> String -> [String] -> String
 join prefix postfix content =
     content >>= (prefix ++) . (++ postfix)
+
+
+_indent :: String
+_indent = "    "
 
 
 _i32Add :: [String]
