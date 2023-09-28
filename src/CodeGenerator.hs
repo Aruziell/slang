@@ -4,12 +4,12 @@ import qualified Syntax as S
 
 
 program :: S.Program -> String
-program (S.Program def) =
+program (S.Program (S.Main _ main) defs) =
     "(module\n" ++
-    "    (func (export \"_start\")\n" ++
---    join "        " "\n" (expressionValue value) ++
+    "    (func (export \"_start\") (result i32)\n" ++
+    join (_indent ++ _indent) "\n" (expression main) ++
     "    )\n" ++
-    join _indent "\n" (definition def) ++
+    join _indent "\n" (defs >>= definition) ++
     ")\n"
 
 

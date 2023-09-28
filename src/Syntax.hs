@@ -2,6 +2,7 @@ module Syntax
     ( Definition(..)
     , Expression(..)
     , ExpressionValue(..)
+    , Main(..)
     , Program(..)
     , int
     , plus
@@ -11,7 +12,7 @@ import Location (Location)
 
 
 data Program
-    = Program Definition
+    = Program Main [Definition]
     deriving (Eq, Show)
 
 
@@ -28,6 +29,11 @@ data ExpressionValue
 
 data Definition
     = Definition Location String Expression
+    deriving (Eq, Show)
+
+
+data Main
+    = Main Location Expression
     deriving (Eq, Show)
 
 

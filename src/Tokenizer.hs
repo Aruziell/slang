@@ -24,6 +24,8 @@ tokenize_ :: L.Location -> Tokenizer
 tokenize_ _ [] = Right []
 tokenize_ loc (' ' : rest) =
     tokenize_ (advance loc) rest
+tokenize_ loc ('\n' : rest) =
+    tokenize_ (advance loc) rest
 tokenize_ loc ('=' : rest) =
     ([T.Token T.Equals loc] ++) <$> tokenize_ (advance loc) rest
 tokenize_ loc ('+' : rest) =

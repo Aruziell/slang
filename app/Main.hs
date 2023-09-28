@@ -7,11 +7,20 @@ import Tokenizer
 import Parser
 import CodeGenerator
 import Data.Bifunctor (first)
+import Data.List (intercalate)
+
+
+input :: String
+input = intercalate "\n"
+    [ "main = 1 + 2 + 3 + 4 + 5"
+    , "foo = 3"
+    , "bar = 5"
+    , "baz = 7"
+    ]
 
 
 main :: IO ()
 main = do
-    let input = "sum = 1 + 2 + 3 + 4 + 5"
     let noOutput result = (result, "")
     let noOutputIO = fmap noOutput
     let outputResult output = (output, output)
@@ -71,6 +80,7 @@ tokenizeErrorMessage (IllegalCharacter c loc) =
 parseErrorMessage :: ParseError -> String
 parseErrorMessage IncompleteExpression = "Incomplete expression."
 parseErrorMessage IncompleteDefinition = "Incomplete definition."
+parseErrorMessage MissingMain = "First definition must be main."
 
 
 logActionEither :: String -> Either SlangError (a, String) -> IO a
