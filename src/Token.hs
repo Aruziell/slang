@@ -13,4 +13,5 @@ data Value
     | Integer Int
     | Equals
     | Plus
+    | End
     deriving (Eq, Show)

@@ -1,4 +1,10 @@
-module Parser (ParseError(..), parse, parseDefinition, parseExpression) where
+module Parser
+    ( ParseError(..)
+    , parse
+    , parseDefinition
+    , parseDefinitionList
+    , parseExpression
+    ) where
 
 import qualified Syntax as S
 import qualified Token as T
@@ -24,7 +30,8 @@ parse tokens = do
 
 parseMain :: PartialParser S.Main
 parseMain (T.Token (T.Identifier "main") loc : T.Token T.Equals _ : exprAndRest) = do
-    (expr, rest) <- parseExpression exprAndRest
+    (expr, endAndRest) <- parseExpression exprAndRest
+    (_, rest) <- parseEnd endAndRest
     return (S.Main loc expr, rest)
 parseMain _ =
     Left MissingMain
@@ -39,28 +46,39 @@ parseDefinitionList tokens = do
 
 parseDefinition :: PartialParser S.Definition
 parseDefinition (T.Token (T.Identifier name) loc : T.Token T.Equals _ : exprAndRest) = do
-    (expr, rest) <- parseExpression exprAndRest
+    (expr, endAndRest) <- parseExpression exprAndRest
+    (_, rest) <- parseEnd endAndRest
     return (S.Definition loc name expr, rest)
 parseDefinition _ =
     Left IncompleteDefinition
 
 
 parseExpression :: PartialParser S.Expression
-parseExpression tokens@(T.Token (T.Integer _) _ : T.Token T.Plus _ : T.Token (T.Integer _) _ : _) =
-    parseAdd tokens
-parseExpression (T.Token (T.Integer _) _ : T.Token T.Plus _ : _) =
-    -- Missing right operand
-    Left IncompleteExpression
-parseExpression (T.Token (T.Integer value) loc : rest) =
-    return (S.Expression (S.IntegerLiteral value) loc, rest)
-parseExpression _ =
-    Left IncompleteExpression
+parseExpression = parseAdd
 
 
 parseAdd :: PartialParser S.Expression
-parseAdd (T.Token (T.Integer lhs) lLoc : T.Token T.Plus opLoc : rhs@(T.Token (T.Integer _) _ : _)) = do
-    let left = S.Expression (S.IntegerLiteral lhs) lLoc
-    (right, rest) <- parseExpression rhs
-    return (S.Expression (S.PlusOperator left right) opLoc, rest)
-parseAdd _ =
+parseAdd tokens = do
+    (left, addAndRest) <- parseLiteral tokens
+    case addAndRest of
+        (T.Token T.Plus loc : rightTokens) -> do
+            (right, rest) <- parseExpression rightTokens
+            return (S.Expression (S.PlusOperator left right) loc, rest)
+        _ ->
+            return (left, addAndRest)
+
+
+parseLiteral :: PartialParser S.Expression
+parseLiteral (T.Token (T.Identifier name) loc : rest) =
+    return (S.Expression (S.Literal (S.Identifier name)) loc, rest)
+parseLiteral (T.Token (T.Integer value) loc : rest) =
+    return (S.Expression (S.Literal (S.Integer value)) loc, rest)
+parseLiteral _ =
     Left IncompleteExpression
+
+
+parseEnd :: PartialParser ()
+parseEnd ((T.Token T.End _) : rest) =
+    return ((), rest)
+parseEnd _ =
+    Left IncompleteDefinition

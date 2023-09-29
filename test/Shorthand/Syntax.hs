@@ -4,6 +4,10 @@ import Shorthand.Location
 import Syntax
 
 
+_id :: String -> Expression
+_id name = identifier name _location
+
+
 _int :: Int -> Expression
 _int value = int value _location
 

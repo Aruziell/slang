@@ -7,15 +7,13 @@ import Tokenizer
 import Parser
 import CodeGenerator
 import Data.Bifunctor (first)
-import Data.List (intercalate)
 
 
 input :: String
-input = intercalate "\n"
-    [ "main = 1 + 2 + 3 + 4 + 5"
+input = concat $ map (++ "\n")
+    [ "main = 1 + 2 + foo + 4 + bar"
     , "foo = 3"
     , "bar = 5"
-    , "baz = 7"
     ]
 
 

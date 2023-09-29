@@ -29,9 +29,23 @@ spec = do
 
     it "definition" $
         parseDefinition
-            [ T._id "foo", T._eq, T._int 1 ]
+            [ T._id "foo", T._eq, T._int 1, T._end ]
         `shouldBeRight`
             (S._def "foo" (S._int 1), [])
+
+    it "definition list" $
+        parseDefinitionList
+            [ T._id "foo", T._eq, T._int 1, T._end
+            , T._id "bar", T._eq, T._int 2, T._end
+            ]
+        `shouldBeRight`
+            [ S._def "foo" (S._int 1)
+            , S._def "bar" (S._int 2)
+            ]
+
+    it "identifier expression" $ do
+        parseExpression [T._id "foo"]
+        `shouldBeRight` (S._id "foo", [])
 
     it "three integer addition" $
         parseExpression
@@ -57,5 +71,5 @@ spec = do
 
     it "preserves location" $ do
         parseExpression [T.Token (T.Integer 1) location]
-        `shouldBeRight` (S.Expression (S.IntegerLiteral 1) location, [])
+        `shouldBeRight` (S.Expression (S.Literal (S.Integer 1)) location, [])
         where location = L.Location 3 5

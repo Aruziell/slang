@@ -26,7 +26,9 @@ expression (S.Expression value _) = expressionValue value
 
 
 expressionValue :: S.ExpressionValue -> [String]
-expressionValue (S.IntegerLiteral value) =
+expressionValue (S.Literal (S.Identifier name)) =
+    _call name
+expressionValue (S.Literal (S.Integer value)) =
     _i32Const value
 expressionValue (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)) =
     -- While it is possible to generate both expressions and then add operator,
@@ -49,6 +51,10 @@ join prefix postfix content =
 
 _indent :: String
 _indent = "    "
+
+
+_call :: String -> [String]
+_call = (:[]) . ("call $" ++)
 
 
 _i32Add :: [String]

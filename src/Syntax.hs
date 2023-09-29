@@ -1,12 +1,4 @@
-module Syntax
-    ( Definition(..)
-    , Expression(..)
-    , ExpressionValue(..)
-    , Main(..)
-    , Program(..)
-    , int
-    , plus
-    ) where
+module Syntax where
 
 import Location (Location)
 
@@ -22,8 +14,14 @@ data Expression
 
 
 data ExpressionValue
-    = IntegerLiteral Int
+    = Literal LiteralValue
     | PlusOperator Expression Expression
+    deriving (Eq, Show)
+
+
+data LiteralValue
+    = Integer Int
+    | Identifier String
     deriving (Eq, Show)
 
 
@@ -37,10 +35,13 @@ data Main
     deriving (Eq, Show)
 
 
+identifier :: String -> Location -> Expression
+identifier name = Expression (Literal (Identifier name))
+
+
 int :: Int -> Location -> Expression
-int value loc = Expression (IntegerLiteral value) loc
+int value = Expression (Literal (Integer value))
 
 
 plus :: Expression -> Expression -> Location -> Expression
-plus l r loc =
-    Expression (l `PlusOperator` r) loc
+plus l r = Expression (l `PlusOperator` r)

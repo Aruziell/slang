@@ -16,5 +16,9 @@ _eq :: Token
 _eq = Token Equals _location 
 
 
+_end :: Token
+_end = Token End _location
+
+
 _plus :: Token
 _plus = Token Plus _location
