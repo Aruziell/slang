@@ -1,4 +1,4 @@
-module CodeGenerator (program, expression) where
+module CodeGenerator (program, function, expression) where
 
 import qualified Syntax as S
 
@@ -7,41 +7,54 @@ program :: S.Program -> String
 program (S.Program (S.Main _ main) defs) =
     "(module\n" ++
     "    (func (export \"_start\") (result i32)\n" ++
-    join (_indent ++ _indent) "\n" (expression main) ++
+    join (_indent ++ _indent) "\n" (expression [] main) ++
     "    )\n" ++
-    join _indent "\n" (defs >>= definition) ++
+    join _indent "\n" (defs >>= function) ++
     ")\n"
 
 
-definition :: S.Definition -> [String]
-definition (S.Definition _ name expr) =
-    [ "(func $" ++ name ++ " (result i32)"
-    ] ++ map (_indent ++) (expression expr) ++
+function :: S.Function -> [String]
+function (S.Function _ name args expr) =
+    [ "(func $" ++ name ++ " " ++ functionArgumentList args ++ "(result i32)"
+    ] ++ map (_indent ++) (expression (_argsToScope args) expr) ++
     [ ")"
     ]
 
 
-expression :: S.Expression -> [String]
-expression (S.Expression value _) = expressionValue value
+_argsToScope :: S.ArgumentList -> [String]
+_argsToScope [] = []
+_argsToScope (S.Argument _ name : rest) = name : _argsToScope rest
 
 
-expressionValue :: S.ExpressionValue -> [String]
-expressionValue (S.Literal (S.Identifier name)) =
-    _call name
-expressionValue (S.Literal (S.Integer value)) =
+functionArgumentList :: S.ArgumentList -> String
+functionArgumentList = concat . map (++ " ") . map functionArgument
+
+
+functionArgument :: S.Argument -> String
+functionArgument (S.Argument _ name) = "(param $" ++ name ++ " i32)"
+
+
+expression :: [String] -> S.Expression -> [String]
+expression locals (S.Expression value _) = expressionValue locals value
+
+
+expressionValue :: [String] -> S.ExpressionValue -> [String]
+expressionValue locals (S.Literal (S.Identifier name)) =
+    (if name `elem` locals then _localGet else _call) name
+expressionValue _ (S.Literal (S.Integer value)) =
     _i32Const value
-expressionValue (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)) =
+expressionValue locals (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)) =
     -- While it is possible to generate both expressions and then add operator,
     -- we want to generate readable code. This way we'll have operator added
     -- as soon as stack contains enough operands.
-    expressionValue lhs ++ plusRest rhs
+    expressionValue locals lhs ++ plusRest locals rhs
 
 
-plusRest :: S.ExpressionValue -> [String]
-plusRest (S.PlusOperator (S.Expression a _) (S.Expression b _)) =
-    expressionValue a ++ _i32Add ++ plusRest b
-plusRest value =
-    expressionValue value ++ _i32Add
+plusRest :: [String] -> S.ExpressionValue -> [String]
+plusRest locals (S.PlusOperator (S.Expression a _) (S.Expression b _)) =
+    expressionValue locals a ++ _i32Add ++ plusRest locals b
+plusRest locals value =
+    expressionValue locals value ++ _i32Add
 
 
 join :: String -> String -> [String] -> String
@@ -63,3 +76,7 @@ _i32Add = ["i32.add"]
 
 _i32Const :: Int -> [String]
 _i32Const = (:[]) . ("i32.const " ++) . show
+
+
+_localGet :: String -> [String]
+_localGet = (:[]) . ("local.get $" ++)

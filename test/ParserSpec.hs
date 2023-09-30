@@ -27,21 +27,25 @@ spec = do
         `shouldBeRight`
             ((S._int 1 `S._plus` S._int 2), [])
 
-    it "definition" $
-        parseDefinition
+    it "function" $
+        parseFunction
             [ T._id "foo", T._eq, T._int 1, T._end ]
         `shouldBeRight`
-            (S._def "foo" (S._int 1), [])
+            (S._fn "foo" [] (S._int 1), [])
 
-    it "definition list" $
-        parseDefinitionList
+    it "function list" $
+        parseFunctionList
             [ T._id "foo", T._eq, T._int 1, T._end
             , T._id "bar", T._eq, T._int 2, T._end
             ]
         `shouldBeRight`
-            [ S._def "foo" (S._int 1)
-            , S._def "bar" (S._int 2)
+            [ S._fn "foo" [] (S._int 1)
+            , S._fn "bar" [] (S._int 2)
             ]
+
+    it "function with a parameter" $
+        parseFunction [T._id "foo", T._id "bar", T._eq, T._int 1, T._end]
+        `shouldBeRight` (S._fn "foo" [S._arg "bar"] (S._int 1), [])
 
     it "identifier expression" $ do
         parseExpression [T._id "foo"]

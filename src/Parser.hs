@@ -1,9 +1,9 @@
 module Parser
     ( ParseError(..)
     , parse
-    , parseDefinition
-    , parseDefinitionList
     , parseExpression
+    , parseFunction
+    , parseFunctionList
     ) where
 
 import qualified Syntax as S
@@ -15,7 +15,7 @@ type PartialParser a = Parser (a, [T.Token])
 
 
 data ParseError
-    = IncompleteDefinition
+    = IncompleteFunction
     | IncompleteExpression
     | MissingMain
     deriving (Eq, Show)
@@ -24,8 +24,8 @@ data ParseError
 parse :: Parser S.Program
 parse tokens = do
     (main, defTokens) <- parseMain tokens
-    definitionList <- parseDefinitionList defTokens
-    return $ S.Program main definitionList
+    functionList <- parseFunctionList defTokens
+    return $ S.Program main functionList
 
 
 parseMain :: PartialParser S.Main
@@ -37,20 +37,43 @@ parseMain _ =
     Left MissingMain
 
 
-parseDefinitionList :: Parser [S.Definition]
-parseDefinitionList [] = Right []
-parseDefinitionList tokens = do
-    (def, rest) <- parseDefinition tokens
-    (def:) <$> parseDefinitionList rest
+parseFunctionList :: Parser [S.Function]
+parseFunctionList [] = Right []
+parseFunctionList tokens = do
+    (def, rest) <- parseFunction tokens
+    (def:) <$> parseFunctionList rest
 
 
-parseDefinition :: PartialParser S.Definition
-parseDefinition (T.Token (T.Identifier name) loc : T.Token T.Equals _ : exprAndRest) = do
+parseFunction :: PartialParser S.Function
+parseFunction (T.Token (T.Identifier name) loc : argsAndRest) = do
+    (args, eqAndRest) <- parseArgumentList argsAndRest
+    (_, exprAndRest) <- parseEquals eqAndRest
     (expr, endAndRest) <- parseExpression exprAndRest
     (_, rest) <- parseEnd endAndRest
-    return (S.Definition loc name expr, rest)
-parseDefinition _ =
-    Left IncompleteDefinition
+    return (S.Function loc name args expr, rest)
+parseFunction _ =
+    Left IncompleteFunction
+
+
+parseArgumentList :: PartialParser [S.Argument]
+parseArgumentList tokens@(T.Token T.Equals _ : _) =
+    return ([], tokens)
+parseArgumentList tokens = do
+    (headArg, tailTokens) <- parseArgument tokens
+    (tailArgs, restTokens) <- parseArgumentList tailTokens
+    return (headArg : tailArgs, restTokens)
+
+
+parseArgument :: PartialParser S.Argument
+parseArgument (T.Token (T.Identifier name) loc : rest) =
+    return (S.Argument loc name, rest)
+parseArgument _ =
+    Left IncompleteFunction
+
+
+parseEquals :: PartialParser ()
+parseEquals (T.Token T.Equals _ : rest) = return ((), rest)
+parseEquals _ = Left IncompleteFunction
 
 
 parseExpression :: PartialParser S.Expression
@@ -81,4 +104,4 @@ parseEnd :: PartialParser ()
 parseEnd ((T.Token T.End _) : rest) =
     return ((), rest)
 parseEnd _ =
-    Left IncompleteDefinition
+    Left IncompleteFunction

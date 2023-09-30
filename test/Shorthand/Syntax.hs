@@ -4,6 +4,10 @@ import Shorthand.Location
 import Syntax
 
 
+_arg :: String -> Argument
+_arg = Argument _location
+
+
 _id :: String -> Expression
 _id name = identifier name _location
 
@@ -12,8 +16,8 @@ _int :: Int -> Expression
 _int value = int value _location
 
 
-_def :: String -> Expression -> Definition
-_def = Definition _location
+_fn :: String -> ArgumentList -> Expression -> Function
+_fn = Function _location
 
 
 _plus :: Expression -> Expression -> Expression

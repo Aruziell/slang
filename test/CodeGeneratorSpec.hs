@@ -10,15 +10,15 @@ spec :: Spec
 spec = do
     describe "expression" $ do
         it "single-digit" $ do
-            expression $ _int 1
+            expression [] (_int 1)
             `shouldBe` ["i32.const 1"]
 
         it "multi-digit integer" $ do
-            expression $ _int 1000
+            expression [] (_int 1000)
             `shouldBe` ["i32.const 1000"]
 
         it "integer addition" $ do
-            expression $
+            expression [] $
                 _int 1 `_plus` _int 2
             `shouldBe`
                 [ "i32.const 1"
@@ -27,7 +27,7 @@ spec = do
                 ]
 
         it "three integer addition" $ do
-            expression $
+            expression [] $
                 _int 1 `_plus` (_int 2 `_plus` _int 3)
             `shouldBe`
                 [ "i32.const 1"
@@ -38,7 +38,7 @@ spec = do
                 ]
 
         it "six integer addition" $ do
-            expression $
+            expression [] $
                 _int 1
                     `_plus` _int 2
                     `_plus` _int 3
@@ -57,4 +57,38 @@ spec = do
                 , "i32.add"
                 , "i32.const 6"
                 , "i32.add"
+                ]
+
+        it "function" $
+            function (_fn "foo" [] (_int 1))
+            `shouldBe`
+                [ "(func $foo (result i32)"
+                , "    i32.const 1"
+                , ")"
+                ]
+
+        it "function with arguments" $
+            function (_fn "foo" [_arg "bar", _arg "baz"] (_id "foo"))
+            `shouldBe`
+                [ "(func $foo (param $bar i32) (param $baz i32) (result i32)"
+                , "    call $foo"
+                , ")"
+                ]
+
+        it "function using arguments" $
+            function (_fn "foo" [_arg "bar", _arg "baz"] (_id "bar"))
+            `shouldBe`
+                [ "(func $foo (param $bar i32) (param $baz i32) (result i32)"
+                , "    local.get $bar"
+                , ")"
+                ]
+
+        it "function double" $
+            function (_fn "foo" [_arg "bar"] ((_id "bar") `_plus` (_id "bar")))
+            `shouldBe`
+                [ "(func $foo (param $bar i32) (result i32)"
+                , "    local.get $bar"
+                , "    local.get $bar"
+                , "    i32.add"
+                , ")"
                 ]

@@ -4,7 +4,7 @@ import Location (Location)
 
 
 data Program
-    = Program Main [Definition]
+    = Program Main [Function]
     deriving (Eq, Show)
 
 
@@ -25,13 +25,21 @@ data LiteralValue
     deriving (Eq, Show)
 
 
-data Definition
-    = Definition Location String Expression
+data Main
+    = Main Location Expression
     deriving (Eq, Show)
 
 
-data Main
-    = Main Location Expression
+data Function
+    = Function Location String ArgumentList Expression
+    deriving (Eq, Show)
+
+
+type ArgumentList = [Argument]
+
+
+data Argument =
+    Argument Location String
     deriving (Eq, Show)
 
 

@@ -13,7 +13,8 @@ input :: String
 input = concat $ map (++ "\n")
     [ "main = 1 + 2 + foo + 4 + bar"
     , "foo = 3"
-    , "bar = 5"
+    , "bar = 2 + foo"
+    , "double a = a + a"
     ]
 
 
@@ -77,8 +78,8 @@ tokenizeErrorMessage (IllegalCharacter c loc) =
 
 parseErrorMessage :: ParseError -> String
 parseErrorMessage IncompleteExpression = "Incomplete expression."
-parseErrorMessage IncompleteDefinition = "Incomplete definition."
-parseErrorMessage MissingMain = "First definition must be main."
+parseErrorMessage IncompleteFunction = "Incomplete function."
+parseErrorMessage MissingMain = "First function must be main."
 
 
 logActionEither :: String -> Either SlangError (a, String) -> IO a
