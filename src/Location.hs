@@ -6,4 +6,8 @@ data Location
         { line :: Int
         , column :: Int
         }
-    deriving (Eq, Show)
+    deriving (Eq)
+
+
+instance Show Location where
+    show (Location l c) = show l ++ ":" ++ show c

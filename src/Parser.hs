@@ -76,20 +76,6 @@ parseEquals (T.Token T.Equals _ : rest) = return ((), rest)
 parseEquals _ = Left IncompleteFunction
 
 
-parseExpressionList :: PartialParser [S.Expression]
-parseExpressionList [] = return ([], [])
-parseExpressionList tokens@(T.Token (T.Identifier _) _ : _) = do
-    (expr, tailAndRest) <- parseExpression tokens
-    (exprTail, rest) <- parseExpressionList tailAndRest
-    return (expr : exprTail, rest)
-parseExpressionList tokens@(T.Token (T.Integer _) _ : _) = do
-    (expr, tailAndRest) <- parseExpression tokens
-    (exprTail, rest) <- parseExpressionList tailAndRest
-    return (expr : exprTail, rest)
-parseExpressionList tokens =
-    return ([], tokens)
-
-
 parseExpression :: PartialParser S.Expression
 parseExpression = parseAdd
 
@@ -122,10 +108,23 @@ parseLiteral _ =
 
 parseCall :: PartialParser S.Expression
 parseCall (T.Token (T.Identifier name) loc : argsAndRest) = do
-    (args, rest) <- parseExpressionList argsAndRest
+    (args, rest) <- parseCallArgumentList argsAndRest
     return (S.Expression (S.FunctionCall name args) loc, rest)
 parseCall _ =
     Left IncompleteExpression
+
+
+parseCallArgumentList :: PartialParser [S.Expression]
+parseCallArgumentList (T.Token (T.Identifier name) loc : argAndRest) = do
+    (expr, _) <- parseExpression [T.Token (T.Identifier name) loc]
+    (exprTail, rest) <- parseCallArgumentList argAndRest
+    return (expr : exprTail, rest)
+parseCallArgumentList (T.Token (T.Integer value) loc : argAndRest) = do
+    (expr, _) <- parseExpression [T.Token (T.Integer value) loc]
+    (exprTail, rest) <- parseCallArgumentList argAndRest
+    return (expr : exprTail, rest)
+parseCallArgumentList tokens =
+    return ([], tokens)
 
 
 parseEnd :: PartialParser ()
