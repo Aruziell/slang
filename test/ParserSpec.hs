@@ -47,9 +47,28 @@ spec = do
         parseFunction [T._id "foo", T._id "bar", T._eq, T._int 1, T._end]
         `shouldBeRight` (S._fn "foo" [S._arg "bar"] (S._int 1), [])
 
-    it "identifier expression" $ do
+    it "function using its parameter" $
+        parseFunction
+            [ T._id "foo", T._id "a", T._eq
+            , T._id "a", T._plus, T._id "a", T._end
+            ]
+        `shouldBeRight`
+            (S._fn "foo" [S._arg "a"]
+                ((S._call "a" []) `S._plus` (S._call "a" [])), [])
+
+    it "function call with a parameter" $
+        parseFunctionList
+            [ T._id "main", T._eq, T._id "foo", T._int 1, T._end
+            , T._id "foo", T._id "a", T._eq, T._int 1, T._end
+            ]
+        `shouldBeRight`
+            [ S._fn "main" [] (S._call "foo" [(S._int 1)])
+            , S._fn "foo" [S._arg "a"] (S._int 1)
+            ]
+
+    it "call expression" $
         parseExpression [T._id "foo"]
-        `shouldBeRight` (S._id "foo", [])
+        `shouldBeRight` (S._call "foo" [], [])
 
     it "three integer addition" $
         parseExpression

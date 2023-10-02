@@ -59,7 +59,8 @@ spec = do
                 , "i32.add"
                 ]
 
-        it "function" $
+    describe "function" $ do
+        it "constant" $
             function (_fn "foo" [] (_int 1))
             `shouldBe`
                 [ "(func $foo (result i32)"
@@ -68,27 +69,60 @@ spec = do
                 ]
 
         it "function with arguments" $
-            function (_fn "foo" [_arg "bar", _arg "baz"] (_id "foo"))
+            function (_fn "foo" [_arg "bar", _arg "baz"] (_call "foo" []))
             `shouldBe`
                 [ "(func $foo (param $bar i32) (param $baz i32) (result i32)"
                 , "    call $foo"
                 , ")"
                 ]
 
-        it "function using arguments" $
-            function (_fn "foo" [_arg "bar", _arg "baz"] (_id "bar"))
+        it "function using its argument" $
+            function (_fn "foo" [_arg "bar", _arg "baz"] (_call "bar" []))
             `shouldBe`
                 [ "(func $foo (param $bar i32) (param $baz i32) (result i32)"
                 , "    local.get $bar"
                 , ")"
                 ]
 
-        it "function double" $
-            function (_fn "foo" [_arg "bar"] ((_id "bar") `_plus` (_id "bar")))
+        it "function call without arguments" $
+            expression [] (_call "foo" [])
+            `shouldBe` ["call $foo"]
+
+        it "function call with a single argument" $
+            expression [] (_call "foo" [_int 1] )
+            `shouldBe` ["i32.const 1", "call $foo"]
+
+        it "function call with arguments" $
+            expression []
+                (_call "foo" [_int 1, _call "bar" [_int 2]])
+            `shouldBe`
+                [ "i32.const 1"
+                , "i32.const 2"
+                , "call $bar"
+                , "call $foo"
+                ]
+
+    describe "scenarios" $ do
+        it "double" $
+            function
+                (_fn "foo" [_arg "bar"]
+                    ((_call "bar" []) `_plus` (_call "bar" [])))
             `shouldBe`
                 [ "(func $foo (param $bar i32) (result i32)"
                 , "    local.get $bar"
                 , "    local.get $bar"
+                , "    i32.add"
+                , ")"
+                ]
+
+        it "add" $
+            function
+                (_fn "add" [_arg "a", _arg "b"]
+                    (_call "a" [] `_plus` _call "b" []))
+            `shouldBe`
+                [ "(func $add (param $a i32) (param $b i32) (result i32)"
+                , "    local.get $a"
+                , "    local.get $b"
                 , "    i32.add"
                 , ")"
                 ]

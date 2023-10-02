@@ -76,27 +76,55 @@ parseEquals (T.Token T.Equals _ : rest) = return ((), rest)
 parseEquals _ = Left IncompleteFunction
 
 
+parseExpressionList :: PartialParser [S.Expression]
+parseExpressionList [] = return ([], [])
+parseExpressionList tokens@(T.Token (T.Identifier _) _ : _) = do
+    (expr, tailAndRest) <- parseExpression tokens
+    (exprTail, rest) <- parseExpressionList tailAndRest
+    return (expr : exprTail, rest)
+parseExpressionList tokens@(T.Token (T.Integer _) _ : _) = do
+    (expr, tailAndRest) <- parseExpression tokens
+    (exprTail, rest) <- parseExpressionList tailAndRest
+    return (expr : exprTail, rest)
+parseExpressionList tokens =
+    return ([], tokens)
+
+
 parseExpression :: PartialParser S.Expression
 parseExpression = parseAdd
 
 
 parseAdd :: PartialParser S.Expression
-parseAdd tokens = do
+parseAdd tokens@(T.Token (T.Integer _) _ : _) = do
     (left, addAndRest) <- parseLiteral tokens
-    case addAndRest of
-        (T.Token T.Plus loc : rightTokens) -> do
-            (right, rest) <- parseExpression rightTokens
-            return (S.Expression (S.PlusOperator left right) loc, rest)
-        _ ->
-            return (left, addAndRest)
+    parseAddAndRest left addAndRest
+parseAdd tokens@(T.Token (T.Identifier _) _ : _) = do
+    (left, addAndRest) <- parseCall tokens
+    parseAddAndRest left addAndRest
+parseAdd _ =
+    Left IncompleteExpression
+
+
+parseAddAndRest :: S.Expression -> PartialParser S.Expression
+parseAddAndRest left (T.Token T.Plus loc : rightAndRest) = do
+    (right, rest) <- parseExpression rightAndRest
+    return (S.Expression (S.PlusOperator left right) loc, rest)
+parseAddAndRest left tokens =
+    return (left, tokens)
 
 
 parseLiteral :: PartialParser S.Expression
-parseLiteral (T.Token (T.Identifier name) loc : rest) =
-    return (S.Expression (S.Literal (S.Identifier name)) loc, rest)
 parseLiteral (T.Token (T.Integer value) loc : rest) =
     return (S.Expression (S.Literal (S.Integer value)) loc, rest)
 parseLiteral _ =
+    Left IncompleteExpression
+
+
+parseCall :: PartialParser S.Expression
+parseCall (T.Token (T.Identifier name) loc : argsAndRest) = do
+    (args, rest) <- parseExpressionList argsAndRest
+    return (S.Expression (S.FunctionCall name args) loc, rest)
+parseCall _ =
     Left IncompleteExpression
 
 

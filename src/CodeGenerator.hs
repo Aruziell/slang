@@ -38,9 +38,18 @@ expression :: [String] -> S.Expression -> [String]
 expression locals (S.Expression value _) = expressionValue locals value
 
 
+expressionList :: [String] -> [S.Expression] -> [String]
+expressionList _ [] = []
+expressionList locals (expr : rest) =
+    expression locals expr ++ expressionList locals rest
+
+
 expressionValue :: [String] -> S.ExpressionValue -> [String]
-expressionValue locals (S.Literal (S.Identifier name)) =
-    (if name `elem` locals then _localGet else _call) name
+expressionValue locals (S.FunctionCall name exprList) =
+    args ++ call
+    where
+        args = expressionList locals exprList
+        call = ((if name `elem` locals then _localGet else _call) name)
 expressionValue _ (S.Literal (S.Integer value)) =
     _i32Const value
 expressionValue locals (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)) =

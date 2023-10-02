@@ -8,8 +8,8 @@ _arg :: String -> Argument
 _arg = Argument _location
 
 
-_id :: String -> Expression
-_id name = identifier name _location
+_call :: String -> [Expression] -> Expression
+_call name args = Expression (FunctionCall name args) _location
 
 
 _int :: Int -> Expression

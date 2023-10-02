@@ -15,13 +15,13 @@ data Expression
 
 data ExpressionValue
     = Literal LiteralValue
+    | FunctionCall String [Expression]
     | PlusOperator Expression Expression
     deriving (Eq, Show)
 
 
 data LiteralValue
     = Integer Int
-    | Identifier String
     deriving (Eq, Show)
 
 
@@ -43,8 +43,8 @@ data Argument =
     deriving (Eq, Show)
 
 
-identifier :: String -> Location -> Expression
-identifier name = Expression (Literal (Identifier name))
+call :: String -> [Expression] -> Location -> Expression
+call name exprList = Expression (FunctionCall name exprList)
 
 
 int :: Int -> Location -> Expression
