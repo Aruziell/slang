@@ -12,6 +12,8 @@ data Value
     = Identifier String
     | Integer Int
     | Equals
+    | ParenthesisLeft
+    | ParenthesisRight
     | Plus
     | End
     deriving (Eq, Show)

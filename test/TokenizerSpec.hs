@@ -22,7 +22,25 @@ spec = do
 
     it "multiple-digit integer" $ do
         tokenize "1000" `shouldBeRight` [T.Token (T.Integer 1000) (L.Location 0 0)]
-        
+
+    it "parenthesized integer" $ do
+        tokenize "(1)"
+        `shouldBeRight`
+            [ T.Token T.ParenthesisLeft     (L.Location 0 0)
+            , T.Token (T.Integer 1)         (L.Location 0 1)
+            , T.Token T.ParenthesisRight    (L.Location 0 2)
+            ]
+    
+    it "parenthesized sum" $ do
+        tokenize "(1 + 2)"
+        `shouldBeRight`
+            [ T.Token T.ParenthesisLeft     (L.Location 0 0)
+            , T.Token (T.Integer 1)         (L.Location 0 1)
+            , T.Token T.Plus                (L.Location 0 3)
+            , T.Token (T.Integer 2)         (L.Location 0 5)
+            , T.Token T.ParenthesisRight    (L.Location 0 6)
+            ]
+
     it "equals" $ do
         tokenize "=" `shouldBeRight` [T.Token T.Equals (L.Location 0 0)]
 

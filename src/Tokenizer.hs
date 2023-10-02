@@ -25,11 +25,15 @@ tokenize_ _ [] = Right []
 tokenize_ loc (' ' : rest) =
     tokenize_ (advance loc) rest
 tokenize_ loc ('\n' : rest) =
-    ([T.Token T.End loc] ++) <$> tokenize_ (advance loc) rest
+    (T.Token T.End loc :) <$> tokenize_ (advance loc) rest
+tokenize_ loc ('(' : rest) =
+    (T.Token T.ParenthesisLeft loc :) <$> tokenize_ (advance loc) rest
+tokenize_ loc (')' : rest) =
+    (T.Token T.ParenthesisRight loc :) <$> tokenize_ (advance loc) rest
 tokenize_ loc ('=' : rest) =
-    ([T.Token T.Equals loc] ++) <$> tokenize_ (advance loc) rest
+    (T.Token T.Equals loc :) <$> tokenize_ (advance loc) rest
 tokenize_ loc ('+' : rest) =
-    ([T.Token T.Plus loc] ++) <$> tokenize_ (advance loc) rest
+    (T.Token T.Plus loc :) <$> tokenize_ (advance loc) rest
 tokenize_ loc text@(c:cs)
     | isDigit c =
         let valueString = takeWhile isDigit text
