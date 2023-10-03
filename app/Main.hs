@@ -11,9 +11,9 @@ import Data.Bifunctor (first)
 
 input :: String
 input = concat $ map (++ "\n")
-    [ "main = add 1 2"
+    [ "main = add (add 1 (double 1)) (add (double 2) 3)"
     , "add a, b = a + b"
-    , "double a = a + a"
+    , "double a = add a a"
     ]
 
 

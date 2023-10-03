@@ -58,6 +58,26 @@ spec = do
                 , "i32.const 6"
                 , "i32.add"
                 ]
+        
+        it "parenthesized addition 1" $ do
+            expression [] $ _paren (_int 1 `_plus` _int 2) `_plus` _int 3
+            `shouldBe`
+                [ "i32.const 1"
+                , "i32.const 2"
+                , "i32.add"
+                , "i32.const 3"
+                , "i32.add"
+                ]
+        
+        it "parenthesized addition 2" $ do
+            expression [] $ _int 1 `_plus` _paren (_int 2 `_plus` _int 3)
+            `shouldBe`
+                [ "i32.const 1"
+                , "i32.const 2"
+                , "i32.const 3"
+                , "i32.add"
+                , "i32.add"
+                ]
 
     describe "function" $ do
         it "constant" $

@@ -57,6 +57,8 @@ expressionValue locals (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)
     -- we want to generate readable code. This way we'll have operator added
     -- as soon as stack contains enough operands.
     expressionValue locals lhs ++ plusRest locals rhs
+expressionValue locals (S.Parenthesized expr) =
+    expression locals expr
 
 
 plusRest :: [String] -> S.ExpressionValue -> [String]

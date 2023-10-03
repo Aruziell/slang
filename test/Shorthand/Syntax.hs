@@ -20,5 +20,9 @@ _fn :: String -> ArgumentList -> Expression -> Function
 _fn = Function _location
 
 
+_paren :: Expression -> Expression
+_paren expr = Expression (Parenthesized expr) _location
+
+
 _plus :: Expression -> Expression -> Expression
 _plus l r = (l `plus` r) _location

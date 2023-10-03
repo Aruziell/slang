@@ -54,6 +54,28 @@ spec = do
             parseExpression [T._plus]
             `shouldBe` Left IncompleteExpression
 
+    describe "parentheses" $ do
+
+        it "constant" $
+            parseExpression [T._pLeft, T._int 1, T._pRight]
+            `shouldBeRight` (S._paren (S._int 1), [])
+
+        it "addition" $
+            parseExpression [T._pLeft, T._int 1, T._plus, T._int 2, T._pRight]
+            `shouldBeRight` (S._paren (S._int 1 `S._plus` S._int 2), [])
+
+        it "call argument" $
+            parseExpression [T._id "foo", T._pLeft, T._int 1, T._pRight]
+            `shouldBeRight` (S._call "foo" [(S._paren (S._int 1))], [])
+
+        it "missing opening parenthesis" $
+            parseExpression [T._int 1, T._pRight]
+            `shouldBeRight` (S._int 1, [T._pRight])
+
+        it "missing closing parenthesis" $
+            parseExpression [T._pLeft, T._int 1]
+            `shouldBe` Left IncompleteExpression
+
     describe "call" $ do
 
         it "call expression" $

@@ -16,6 +16,7 @@ data Expression
 data ExpressionValue
     = Literal LiteralValue
     | FunctionCall String [Expression]
+    | Parenthesized Expression
     | PlusOperator Expression Expression
     deriving (Eq, Show)
 

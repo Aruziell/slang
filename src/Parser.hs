@@ -86,7 +86,19 @@ parseEquals _ = Left IncompleteFunction
 
 
 parseExpression :: PartialParser S.Expression
-parseExpression = parseAdd
+parseExpression (T.Token T.ParenthesisLeft loc : exprAndRest) = do
+    (expr, closeAndRest) <- parseExpression exprAndRest
+    (_, rest) <- requireParClose closeAndRest
+    return (S.Expression (S.Parenthesized expr) loc, rest)
+parseExpression tokens =
+    parseAdd tokens
+
+
+requireParClose :: PartialParser ()
+requireParClose (T.Token T.ParenthesisRight _ : rest) =
+    return ((), rest)
+requireParClose _ =
+    Left IncompleteExpression
 
 
 parseAdd :: PartialParser S.Expression
@@ -124,6 +136,10 @@ parseCall _ =
 
 
 parseCallArgumentList :: PartialParser [S.Expression]
+parseCallArgumentList tokens@(T.Token T.ParenthesisLeft _ : _) = do
+    (expr, argRest) <- parseExpression tokens
+    (exprTail, rest) <- parseCallArgumentList argRest
+    return (expr : exprTail, rest)
 parseCallArgumentList (T.Token (T.Identifier name) loc : argAndRest) = do
     (expr, _) <- parseExpression [T.Token (T.Identifier name) loc]
     (exprTail, rest) <- parseCallArgumentList argAndRest
