@@ -14,13 +14,13 @@ import EitherExpectation
 
 spec :: Spec
 spec = do
-    describe "literals" $ do
+    describe "literal" $ do
       
         it "integer" $
             parseExpression [T._int 1]
                 `shouldBeRight` (S._int 1, [])
 
-    describe "operators" $ do
+    describe "operator" $ do
       
         it "integer addition" $
             parseExpression
@@ -54,7 +54,7 @@ spec = do
             parseExpression [T._plus]
             `shouldBe` Left IncompleteExpression
 
-    describe "calls" $ do
+    describe "call" $ do
 
         it "call expression" $
             parseExpression [T._id "foo"]
@@ -72,7 +72,7 @@ spec = do
             `shouldBeRight`
                 (S._call "foo" [S._int 1, S._int 2, S._int 3], [])
 
-    describe "functions" $ do
+    describe "function" $ do
       
         it "constant" $
             parseFunction
@@ -92,6 +92,16 @@ spec = do
             `shouldBeRight`
                 (S._fn "foo" [S._arg "a"]
                     ((S._call "a" []) `S._plus` (S._call "a" [])), [])
+
+        it "with multiple parameters" $
+            parseFunction
+                [ T._id "foo", T._id "a", T._sep, T._id "b", T._sep, T._id "c"
+                , T._eq, T._int 1, T._end
+                ]
+            `shouldBeRight`
+                ( S._fn "foo" [S._arg "a", S._arg "b", S._arg "c"] (S._int 1)
+                , []
+                )
 
         it "function list" $
             parseFunctionList

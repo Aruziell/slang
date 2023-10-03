@@ -60,8 +60,17 @@ parseArgumentList tokens@(T.Token T.Equals _ : _) =
     return ([], tokens)
 parseArgumentList tokens = do
     (headArg, tailTokens) <- parseArgument tokens
-    (tailArgs, restTokens) <- parseArgumentList tailTokens
+    (tailArgs, restTokens) <- parseArgumentTail tailTokens
     return (headArg : tailArgs, restTokens)
+
+
+parseArgumentTail :: PartialParser [S.Argument]
+parseArgumentTail (T.Token T.Separator _ : argAndRest) = do
+    (arg, tailAndRest) <- parseArgument argAndRest
+    (argTail, rest) <- parseArgumentTail tailAndRest
+    return (arg : argTail, rest)
+parseArgumentTail tokens =
+    return ([], tokens)
 
 
 parseArgument :: PartialParser S.Argument

@@ -15,5 +15,6 @@ data Value
     | ParenthesisLeft
     | ParenthesisRight
     | Plus
+    | Separator
     | End
     deriving (Eq, Show)

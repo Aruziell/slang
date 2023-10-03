@@ -12,6 +12,14 @@ _int :: Int -> Token
 _int value = Token (Integer value) _location
 
 
+_pLeft :: Token
+_pLeft = Token ParenthesisLeft _location
+
+
+_pRight :: Token
+_pRight = Token ParenthesisRight _location
+
+
 _eq :: Token
 _eq = Token Equals _location 
 
@@ -22,3 +30,7 @@ _end = Token End _location
 
 _plus :: Token
 _plus = Token Plus _location
+
+
+_sep :: Token
+_sep = Token Separator _location

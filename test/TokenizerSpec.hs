@@ -40,6 +40,10 @@ spec = do
             , T.Token (T.Integer 2)         (L.Location 0 5)
             , T.Token T.ParenthesisRight    (L.Location 0 6)
             ]
+    
+    it "separator" $ do
+        tokenize ","
+        `shouldBeRight` [T.Token T.Separator (L.Location 0 0)]
 
     it "equals" $ do
         tokenize "=" `shouldBeRight` [T.Token T.Equals (L.Location 0 0)]

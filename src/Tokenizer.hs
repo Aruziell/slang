@@ -30,6 +30,8 @@ tokenize_ loc ('(' : rest) =
     (T.Token T.ParenthesisLeft loc :) <$> tokenize_ (advance loc) rest
 tokenize_ loc (')' : rest) =
     (T.Token T.ParenthesisRight loc :) <$> tokenize_ (advance loc) rest
+tokenize_ loc (',' : rest) =
+    (T.Token T.Separator loc :) <$> tokenize_ (advance loc) rest
 tokenize_ loc ('=' : rest) =
     (T.Token T.Equals loc :) <$> tokenize_ (advance loc) rest
 tokenize_ loc ('+' : rest) =
