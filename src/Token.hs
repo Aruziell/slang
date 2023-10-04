@@ -9,12 +9,13 @@ data Token
 
 
 data Value
-    = Identifier String
-    | Integer Int
+    = End
     | Equals
+    | Identifier String
+    | Integer Int
     | ParenthesisLeft
     | ParenthesisRight
     | Plus
     | Separator
-    | End
+    | When | Then
     deriving (Eq, Show)

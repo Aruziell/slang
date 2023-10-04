@@ -4,12 +4,12 @@ import qualified Syntax as S
 
 
 program :: S.Program -> String
-program (S.Program (S.Main _ main) defs) =
+program (S.Program (S.Main _ main) funs) =
     "(module\n" ++
     "    (func (export \"_start\") (result i32)\n" ++
     join (_indent ++ _indent) "\n" (expression [] main) ++
     "    )\n" ++
-    join _indent "\n" (defs >>= function) ++
+    join _indent "\n" (funs >>= function) ++
     ")\n"
 
 
@@ -59,6 +59,26 @@ expressionValue locals (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)
     expressionValue locals lhs ++ plusRest locals rhs
 expressionValue locals (S.Parenthesized expr) =
     expression locals expr
+expressionValue locals (S.When expr cases) =
+    [ "(local $when i32)"
+    ] ++ expression locals expr ++
+    [ "local.tee $when"
+    ] ++ whenCaseList locals cases
+
+
+whenCaseList :: [String] -> [S.WhenCase] -> [String]
+whenCaseList _ [] = []
+whenCaseList locals ((expr, result) : rest) =
+    expression locals expr ++
+    [ "i32.eq"
+    , "(if (result i32)"
+    , _indent ++ "(then"
+    ] ++ map ((_indent ++ _indent) ++) (expression locals result) ++
+    [ _indent ++ _indent ++ "return"
+    , _indent ++ ")"
+    , _indent ++ "(else local.get $when)"
+    , ")"
+    ] ++ whenCaseList locals rest
 
 
 plusRest :: [String] -> S.ExpressionValue -> [String]

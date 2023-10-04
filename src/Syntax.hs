@@ -18,7 +18,11 @@ data ExpressionValue
     | FunctionCall String [Expression]
     | Parenthesized Expression
     | PlusOperator Expression Expression
+    | When Expression [WhenCase]
     deriving (Eq, Show)
+
+
+type WhenCase = (Expression, Expression)
 
 
 data LiteralValue

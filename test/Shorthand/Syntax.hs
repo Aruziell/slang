@@ -26,3 +26,7 @@ _paren expr = Expression (Parenthesized expr) _location
 
 _plus :: Expression -> Expression -> Expression
 _plus l r = (l `plus` r) _location
+
+
+_when :: Expression -> [WhenCase] -> Expression
+_when expr cases = Expression (When expr cases) _location

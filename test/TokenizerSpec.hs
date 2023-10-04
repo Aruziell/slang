@@ -86,6 +86,16 @@ spec = do
             , T.Token (T.Integer 1) (L.Location 0 9)
             ]
 
+    describe "condition" $ do
+    
+        it "when" $
+            tokenize "when"
+            `shouldBeRight` [T.Token T.When (L.Location 0 0)]
+        
+        it "then" $
+            tokenize "then"
+            `shouldBeRight` [T.Token T.Then (L.Location 0 0)]
+
     illegalCharacter '~'
     illegalCharacter '!'
     illegalCharacter '%'

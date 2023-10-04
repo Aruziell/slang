@@ -11,9 +11,13 @@ import Data.Bifunctor (first)
 
 input :: String
 input = concat $ map (++ "\n")
-    [ "main = add (add 1 (double 1)) (add (double 2) 3)"
+    [ "main = add (add 1 (double (not 0))) (add (double 2) 3)"
     , "add a, b = a + b"
     , "double a = add a a"
+    , "not a = when a"
+    , "    0 then 1"
+    , "    1 then 0"
+    , ""
     ]
 
 
@@ -79,6 +83,10 @@ parseErrorMessage :: ParseError -> String
 parseErrorMessage IncompleteExpression = "Incomplete expression."
 parseErrorMessage IncompleteFunction = "Incomplete function."
 parseErrorMessage MissingMain = "First function must be main."
+parseErrorMessage (Expectation desc expectation token) =
+    "Unexpected token " ++ show token ++ ".\n"
+        ++ "Expected " ++ show expectation ++ ".\n"
+        ++ desc
 
 
 logActionEither :: String -> Either SlangError (a, String) -> IO a

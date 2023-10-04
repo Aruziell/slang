@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Parser
     ( ParseError(..)
     , parse
@@ -6,11 +8,14 @@ module Parser
     , parseFunctionList
     ) where
 
+import Data.Maybe (listToMaybe)
+import GHC.Stack (HasCallStack, prettyCallStack, callStack)
+
 import qualified Syntax as S
 import qualified Token as T
 
 
-type Parser a = [T.Token] -> Either ParseError a
+type Parser a = HasCallStack => [T.Token] -> Either ParseError a
 type PartialParser a = Parser (a, [T.Token])
 
 
@@ -18,20 +23,33 @@ data ParseError
     = IncompleteFunction
     | IncompleteExpression
     | MissingMain
+    | Expectation String Expectation (Maybe T.Token)
     deriving (Eq, Show)
+
+
+data Expectation
+    = Function
+    | Expression
+    | Token T.Value
+    deriving (Eq, Show)
+
+
+expectError :: HasCallStack => Expectation -> [T.Token] -> ParseError
+expectError expect tokens =
+    Expectation (prettyCallStack callStack) expect (listToMaybe tokens)
 
 
 parse :: Parser S.Program
 parse tokens = do
-    (main, defTokens) <- parseMain tokens
-    functionList <- parseFunctionList defTokens
+    (main, funTokens) <- parseMain tokens
+    functionList <- parseFunctionList funTokens
     return $ S.Program main functionList
 
 
 parseMain :: PartialParser S.Main
 parseMain (T.Token (T.Identifier "main") loc : T.Token T.Equals _ : exprAndRest) = do
     (expr, endAndRest) <- parseExpression exprAndRest
-    (_, rest) <- parseEnd endAndRest
+    (_, rest) <- requireEnd endAndRest
     return (S.Main loc expr, rest)
 parseMain _ =
     Left MissingMain
@@ -40,8 +58,8 @@ parseMain _ =
 parseFunctionList :: Parser [S.Function]
 parseFunctionList [] = Right []
 parseFunctionList tokens = do
-    (def, rest) <- parseFunction tokens
-    (def:) <$> parseFunctionList rest
+    (fun, rest) <- parseFunction tokens
+    (fun:) <$> parseFunctionList rest
 
 
 parseFunction :: PartialParser S.Function
@@ -49,7 +67,7 @@ parseFunction (T.Token (T.Identifier name) loc : argsAndRest) = do
     (args, eqAndRest) <- parseArgumentList argsAndRest
     (_, exprAndRest) <- parseEquals eqAndRest
     (expr, endAndRest) <- parseExpression exprAndRest
-    (_, rest) <- parseEnd endAndRest
+    (_, rest) <- requireEnd endAndRest
     return (S.Function loc name args expr, rest)
 parseFunction _ =
     Left IncompleteFunction
@@ -90,15 +108,46 @@ parseExpression (T.Token T.ParenthesisLeft loc : exprAndRest) = do
     (expr, closeAndRest) <- parseExpression exprAndRest
     (_, rest) <- requireParClose closeAndRest
     return (S.Expression (S.Parenthesized expr) loc, rest)
+parseExpression (T.Token T.When loc : exprAndRest) = do
+    (expr, endAndRest) <- parseExpression exprAndRest
+    (_, casesAndRest) <- requireEnd endAndRest
+    (cases, rest) <- parseWhenCaseList casesAndRest
+    return (S.Expression (S.When expr cases) loc, rest)
 parseExpression tokens =
     parseAdd tokens
+
+
+parseWhenCaseList :: PartialParser [S.WhenCase]
+parseWhenCaseList (T.Token T.End loc : rest) =
+    return ([], (T.Token T.End loc :  rest))
+parseWhenCaseList tokens = do
+    (case_, thenAndRest) <- parseExpression tokens
+    (_, exprAndRest) <- requireThen thenAndRest
+    (expr, endAndRest) <- parseExpression exprAndRest
+    (_, caseTailAndRest) <- requireEnd endAndRest
+    (caseTail, rest)  <- parseWhenCaseList caseTailAndRest
+    return ((case_, expr) : caseTail, rest)
+
+
+requireEnd :: PartialParser ()
+requireEnd (T.Token T.End _ : rest) =
+    return ((), rest)
+requireEnd tokens =
+    Left $ expectError (Token T.End) tokens
 
 
 requireParClose :: PartialParser ()
 requireParClose (T.Token T.ParenthesisRight _ : rest) =
     return ((), rest)
-requireParClose _ =
-    Left IncompleteExpression
+requireParClose tokens =
+    Left $ expectError (Token T.ParenthesisRight) tokens
+
+
+requireThen :: PartialParser ()
+requireThen (T.Token T.Then _ : rest) =
+    return ((), rest)
+requireThen tokens =
+    Left $ expectError (Token T.Then) tokens
 
 
 parseAdd :: PartialParser S.Expression
@@ -108,8 +157,8 @@ parseAdd tokens@(T.Token (T.Integer _) _ : _) = do
 parseAdd tokens@(T.Token (T.Identifier _) _ : _) = do
     (left, addAndRest) <- parseCall tokens
     parseAddAndRest left addAndRest
-parseAdd _ =
-    Left IncompleteExpression
+parseAdd tokens =
+    Left $ expectError Expression tokens
 
 
 parseAddAndRest :: S.Expression -> PartialParser S.Expression
@@ -123,8 +172,8 @@ parseAddAndRest left tokens =
 parseLiteral :: PartialParser S.Expression
 parseLiteral (T.Token (T.Integer value) loc : rest) =
     return (S.Expression (S.Literal (S.Integer value)) loc, rest)
-parseLiteral _ =
-    Left IncompleteExpression
+parseLiteral tokens =
+    Left $ expectError Expression tokens
 
 
 parseCall :: PartialParser S.Expression
@@ -150,10 +199,3 @@ parseCallArgumentList (T.Token (T.Integer value) loc : argAndRest) = do
     return (expr : exprTail, rest)
 parseCallArgumentList tokens =
     return ([], tokens)
-
-
-parseEnd :: PartialParser ()
-parseEnd ((T.Token T.End _) : rest) =
-    return ((), rest)
-parseEnd _ =
-    Left IncompleteFunction

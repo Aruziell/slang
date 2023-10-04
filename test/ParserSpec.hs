@@ -1,5 +1,6 @@
 module ParserSpec (spec) where
 
+import Data.Either
 import Test.Hspec
 
 import Parser
@@ -44,15 +45,15 @@ spec = do
 
         it "missing left add operand" $ do
             parseExpression [T._plus, T._int 1]
-            `shouldBe` Left IncompleteExpression
+            `shouldSatisfy` isLeft
 
         it "missing right add operand" $ do
             parseExpression [T._int 1, T._plus]
-            `shouldBe` Left IncompleteExpression
+            `shouldSatisfy` isLeft
     
         it "missing both add operands" $ do
             parseExpression [T._plus]
-            `shouldBe` Left IncompleteExpression
+            `shouldSatisfy` isLeft
 
     describe "parentheses" $ do
 
@@ -74,7 +75,7 @@ spec = do
 
         it "missing closing parenthesis" $
             parseExpression [T._pLeft, T._int 1]
-            `shouldBe` Left IncompleteExpression
+            `shouldSatisfy` isLeft
 
     describe "call" $ do
 
@@ -134,6 +135,22 @@ spec = do
                 [ S._fn "foo" [] (S._int 1)
                 , S._fn "bar" [] (S._int 2)
                 ]
+
+    describe "condition" $
+
+        it "two cases when-then" $
+            parseExpression
+                [ T._when, T._int 1, (T._end)
+                , T._int 2, T._then, T._int 3, T._end
+                , T._int 4, T._then, T._int 5, T._end
+                , T._end
+                ]
+            `shouldBeRight`
+                ( S._when (S._int 1)
+                    [ (S._int 2, S._int 3)
+                    , (S._int 4, S._int 5)
+                    ]
+                , [T._end])
 
     it "addition of function calls" $
         parseExpression
