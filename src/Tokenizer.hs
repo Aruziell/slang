@@ -40,6 +40,8 @@ tokenize_ loc ('w':'h':'e':'n' : rest) =
     (T.Token T.When loc :) <$> tokenize_ (advance loc) rest
 tokenize_ loc ('t':'h':'e':'n' : rest) =
     (T.Token T.Then loc :) <$> tokenize_ (advance loc) rest
+tokenize_ loc ('e':'l':'s':'e' : rest) =
+    (T.Token T.Else loc :) <$> tokenize_ (advance loc) rest
 tokenize_ loc text@(c:cs)
     | isDigit c =
         let valueString = takeWhile isDigit text

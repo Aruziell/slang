@@ -59,11 +59,13 @@ expressionValue locals (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)
     expressionValue locals lhs ++ plusRest locals rhs
 expressionValue locals (S.Parenthesized expr) =
     expression locals expr
-expressionValue locals (S.When expr cases) =
+expressionValue locals (S.When expr cases else_) =
     [ "(local $when i32)"
     ] ++ expression locals expr ++
     [ "local.tee $when"
-    ] ++ whenCaseList locals cases
+    ] ++ whenCaseList locals cases ++
+    [ "drop" ] ++
+    expression locals else_
 
 
 whenCaseList :: [String] -> [S.WhenCase] -> [String]

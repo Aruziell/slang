@@ -28,6 +28,10 @@ _then :: Token
 _then = Token Then _location
 
 
+_else :: Token
+_else = Token Else _location
+
+
 _pLeft :: Token
 _pLeft = Token ParenthesisLeft _location
 

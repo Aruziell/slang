@@ -11,13 +11,11 @@ import Data.Bifunctor (first)
 
 input :: String
 input = concat $ map (++ "\n")
-    [ "main = add (add 1 (double (not 0))) (add (double 2) 3)"
-    , "add a, b = a + b"
-    , "double a = add a a"
-    , "not a = when a"
-    , "    0 then 1"
-    , "    1 then 0"
-    , ""
+    [ "main = fib 10"
+    , "fib n = fibn 0 n 0 1"
+    , "fibn c, n, a, b = when c"
+    , "    n then a"
+    , "    else (fibn (c+1) n b (a+b))"
     ]
 
 

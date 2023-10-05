@@ -96,6 +96,10 @@ spec = do
             tokenize "then"
             `shouldBeRight` [T.Token T.Then (L.Location 0 0)]
 
+        it "else" $
+            tokenize "else"
+            `shouldBeRight` [T.Token T.Else (L.Location 0 0)]
+
     illegalCharacter '~'
     illegalCharacter '!'
     illegalCharacter '%'

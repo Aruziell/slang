@@ -143,14 +143,16 @@ spec = do
                 [ T._when, T._int 1, (T._end)
                 , T._int 2, T._then, T._int 3, T._end
                 , T._int 4, T._then, T._int 5, T._end
-                , T._end
+                , T._else, T._int 6, T._end
                 ]
             `shouldBeRight`
                 ( S._when (S._int 1)
                     [ (S._int 2, S._int 3)
                     , (S._int 4, S._int 5)
                     ]
-                , [T._end])
+                    (S._int 6)
+                , [T._end]
+                )
 
     it "addition of function calls" $
         parseExpression

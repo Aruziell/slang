@@ -100,7 +100,7 @@ parseArgument _ =
 
 parseEquals :: PartialParser ()
 parseEquals (T.Token T.Equals _ : rest) = return ((), rest)
-parseEquals _ = Left IncompleteFunction
+parseEquals tokens = Left $ expectError (Token T.Equals) tokens
 
 
 parseExpression :: PartialParser S.Expression
@@ -111,15 +111,16 @@ parseExpression (T.Token T.ParenthesisLeft loc : exprAndRest) = do
 parseExpression (T.Token T.When loc : exprAndRest) = do
     (expr, endAndRest) <- parseExpression exprAndRest
     (_, casesAndRest) <- requireEnd endAndRest
-    (cases, rest) <- parseWhenCaseList casesAndRest
-    return (S.Expression (S.When expr cases) loc, rest)
+    (cases, elseAndRest) <- parseWhenCaseList casesAndRest
+    (else_, rest) <- parseElse elseAndRest
+    return (S.Expression (S.When expr cases else_) loc, rest)
 parseExpression tokens =
     parseAdd tokens
 
 
 parseWhenCaseList :: PartialParser [S.WhenCase]
-parseWhenCaseList (T.Token T.End loc : rest) =
-    return ([], (T.Token T.End loc :  rest))
+parseWhenCaseList tokens@(T.Token T.Else _ : _) =
+    return ([], tokens)
 parseWhenCaseList tokens = do
     (case_, thenAndRest) <- parseExpression tokens
     (_, exprAndRest) <- requireThen thenAndRest
@@ -127,6 +128,14 @@ parseWhenCaseList tokens = do
     (_, caseTailAndRest) <- requireEnd endAndRest
     (caseTail, rest)  <- parseWhenCaseList caseTailAndRest
     return ((case_, expr) : caseTail, rest)
+
+
+parseElse :: PartialParser S.Expression
+parseElse (T.Token T.Else _ : exprAndRest) = do
+    (expr, rest) <- parseExpression exprAndRest
+    return (expr, rest)
+parseElse tokens =
+    Left $ expectError (Token T.Else) tokens
 
 
 requireEnd :: PartialParser ()

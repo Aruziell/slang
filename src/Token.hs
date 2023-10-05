@@ -17,5 +17,5 @@ data Value
     | ParenthesisRight
     | Plus
     | Separator
-    | When | Then
+    | When | Then | Else
     deriving (Eq, Show)

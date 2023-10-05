@@ -18,7 +18,8 @@ data ExpressionValue
     | FunctionCall String [Expression]
     | Parenthesized Expression
     | PlusOperator Expression Expression
-    | When Expression [WhenCase]
+    -- When expr [cases] else 
+    | When Expression [WhenCase] Expression
     deriving (Eq, Show)
 
 
