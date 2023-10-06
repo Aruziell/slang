@@ -1,4 +1,4 @@
-module Tokenizer (TokenizeError(..), tokenize) where
+module Tokenizer (Tokenizer, TokenizeError(..), tokenize) where
 
 import Data.Char (isDigit, isLetter)
 import qualified Data.List.NonEmpty as NonEmpty (NonEmpty(..), drop, takeWhile)

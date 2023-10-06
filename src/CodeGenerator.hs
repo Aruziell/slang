@@ -1,9 +1,13 @@
-module CodeGenerator (program, function, expression) where
+module CodeGenerator (ProgramGenerator, program, function, expression) where
 
 import qualified Syntax as S
 
 
-program :: S.Program -> String
+type CodeGenerator a = a -> String
+type ProgramGenerator = CodeGenerator S.Program
+
+
+program :: ProgramGenerator
 program (S.Program (S.Main _ main) funs) =
     "(module\n" ++
     "    (func (export \"_start\") (result i32)\n" ++

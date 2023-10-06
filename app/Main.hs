@@ -1,12 +1,14 @@
 module Main (main) where
 
+import Data.Bifunctor (first)
 import System.Process
 
 import Location (Location(Location))
 import Tokenizer
 import Parser
 import CodeGenerator
-import Data.Bifunctor (first)
+import Runner
+import Toolchain
 
 
 input :: String
@@ -15,7 +17,7 @@ input = concat $ map (++ "\n")
     , "fib n = fibn 0 n 0 1"
     , "fibn c, n, a, b = when c"
     , "    n then a"
-    , "    else (fibn (c+1) n b (a+b))"
+    , "    else fibn (c+1) n b (a+b)"
     ]
 
 
@@ -62,14 +64,10 @@ locationToString (Location line column) =
     show line ++ ":" ++ show column
 
 
-data SlangError
-    = TokenizeFailure TokenizeError
-    | ParseFailure ParseError
-
-
 errorMessage :: SlangError -> String
 errorMessage (TokenizeFailure err) = tokenizeErrorMessage err
 errorMessage (ParseFailure err) = parseErrorMessage err
+errorMessage (RunFailure err) = runErrorMessage err
 
 
 tokenizeErrorMessage :: TokenizeError -> String
@@ -85,6 +83,13 @@ parseErrorMessage (Expectation desc expectation token) =
     "Unexpected token " ++ show token ++ ".\n"
         ++ "Expected " ++ show expectation ++ ".\n"
         ++ desc
+
+
+runErrorMessage :: RunError -> String
+runErrorMessage (RunError code stdout stderr) =
+    "Run failure. Process exited with code " ++ show code ++ ".\n"
+        ++ "Output:\n" ++ stdout ++ "\n"
+        ++ "Error:\n" ++ stderr ++ "\n"
 
 
 logActionEither :: String -> Either SlangError (a, String) -> IO a

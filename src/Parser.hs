@@ -1,7 +1,8 @@
 {-# LANGUAGE RankNTypes #-}
 
 module Parser
-    ( ParseError(..)
+    ( ProgramParser
+    , ParseError(..)
     , parse
     , parseExpression
     , parseFunction
@@ -17,6 +18,7 @@ import qualified Token as T
 
 type Parser a = HasCallStack => [T.Token] -> Either ParseError a
 type PartialParser a = Parser (a, [T.Token])
+type ProgramParser = Parser S.Program
 
 
 data ParseError
