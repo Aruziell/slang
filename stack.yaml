@@ -3,3 +3,6 @@ resolver: lts-21.12
 packages:
 - .
 
+nix:
+  enable: true
+  shell-file: shell.nix
