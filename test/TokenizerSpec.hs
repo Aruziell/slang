@@ -17,6 +17,54 @@ spec = do
     it "skips spaces" $ do
         tokenize "   " `shouldBeRight` []
 
+    it "indent" $ do
+        tokenize "    "
+        `shouldBeRight`
+            [ T.Token (T.Begin) (L.Location 0 0)
+            , T.Token (T.End) (L.Location 0 4)
+            ]
+
+    it "triple indent" $ do
+        tokenize "            "
+        `shouldBeRight`
+            [ T.Token (T.Begin) (L.Location 0 0)
+            , T.Token (T.Begin) (L.Location 0 4)
+            , T.Token (T.Begin) (L.Location 0 8)
+            , T.Token (T.End) (L.Location 0 12)
+            , T.Token (T.End) (L.Location 0 12)
+            , T.Token (T.End) (L.Location 0 12)
+            ]
+
+    it "dedent" $ do
+        (ignoreNewlines <$>) . tokenize $ unlines
+            [ "        "
+            , "    "
+            ]
+        `shouldBeRight`
+            [ T.Token (T.Begin) (L.Location 0 0)
+            , T.Token (T.Begin) (L.Location 0 4)
+            , T.Token (T.End) (L.Location 1 4)
+            , T.Token (T.End) (L.Location 2 0)
+            ]
+
+    it "indented block" $ do
+        (ignoreNewlines <$>) . tokenize $ unlines
+            [ "block"
+            , "    foo"
+            , "    1"
+            , "        bar"
+            ]
+        `shouldBeRight`
+            [ T.Token (T.Identifier "block") (L.Location 0 0)
+            , T.Token (T.Begin) (L.Location 1 0)
+                , T.Token (T.Identifier "foo") (L.Location 1 4)
+                , T.Token (T.Integer 1) (L.Location 2 4)
+                , T.Token (T.Begin) (L.Location 3 4)
+                    , T.Token (T.Identifier "bar") (L.Location 3 8)
+                , T.Token (T.End) (L.Location 4 0)
+            , T.Token (T.End) (L.Location 4 0)
+            ]
+
     it "single-digit integer" $ do
         tokenize "1" `shouldBeRight` [T.Token (T.Integer 1) (L.Location 0 0)]
 
@@ -103,6 +151,10 @@ spec = do
     illegalCharacter '~'
     illegalCharacter '!'
     illegalCharacter '%'
+
+
+ignoreNewlines :: [T.Token] -> [T.Token]
+ignoreNewlines = filter (\(T.Token value _) -> value /= T.Newline)
 
 
 illegalCharacter :: Char -> SpecWith (Arg Expectation)

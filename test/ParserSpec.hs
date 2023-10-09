@@ -99,18 +99,18 @@ spec = do
       
         it "constant" $
             parseFunction
-                [ T._id "foo", T._eq, T._int 1, T._end ]
+                [ T._id "foo", T._eq, T._int 1 ]
             `shouldBeRight`
                 (S._fn "foo" [] (S._int 1), [])
 
         it "with a parameter" $
-            parseFunction [T._id "foo", T._id "bar", T._eq, T._int 1, T._end]
+            parseFunction [T._id "foo", T._id "bar", T._eq, T._int 1 ]
             `shouldBeRight` (S._fn "foo" [S._arg "bar"] (S._int 1), [])
 
         it "using its parameter" $
             parseFunction
                 [ T._id "foo", T._id "a", T._eq
-                , T._id "a", T._plus, T._id "a", T._end
+                , T._id "a", T._plus, T._id "a"
                 ]
             `shouldBeRight`
                 (S._fn "foo" [S._arg "a"]
@@ -119,31 +119,44 @@ spec = do
         it "with multiple parameters" $
             parseFunction
                 [ T._id "foo", T._id "a", T._sep, T._id "b", T._sep, T._id "c"
-                , T._eq, T._int 1, T._end
+                , T._eq, T._int 1
                 ]
             `shouldBeRight`
                 ( S._fn "foo" [S._arg "a", S._arg "b", S._arg "c"] (S._int 1)
                 , []
                 )
 
-        it "function list" $
+        it "list" $
             parseFunctionList
-                [ T._id "foo", T._eq, T._int 1, T._end
-                , T._id "bar", T._eq, T._int 2, T._end
+                [ T._id "foo", T._eq, T._int 1
+                , T._id "bar", T._eq, T._int 2
                 ]
             `shouldBeRight`
                 [ S._fn "foo" [] (S._int 1)
                 , S._fn "bar" [] (S._int 2)
                 ]
 
+        it "list skips newlines" $
+            parseFunctionList
+                [ T._newline
+                , T._id "foo", T._eq, T._int 1, T._newline
+                , T._newline
+                , T._newline
+                ]
+            `shouldBeRight`
+                [ S._fn "foo" [] (S._int 1)
+                ]
+
     describe "condition" $
 
         it "two cases when-then" $
             parseExpression
-                [ T._when, T._int 1, (T._end)
-                , T._int 2, T._then, T._int 3, T._end
-                , T._int 4, T._then, T._int 5, T._end
-                , T._else, T._int 6, T._end
+                [ T._when, T._int 1
+                , T._begin
+                    , T._int 2, T._then, T._int 3, T._newline
+                    , T._int 4, T._then, T._int 5, T._newline
+                    , T._else, T._int 6
+                , T._end
                 ]
             `shouldBeRight`
                 ( S._when (S._int 1)
@@ -151,7 +164,7 @@ spec = do
                     , (S._int 4, S._int 5)
                     ]
                     (S._int 6)
-                , [T._end]
+                , []
                 )
 
     it "addition of function calls" $

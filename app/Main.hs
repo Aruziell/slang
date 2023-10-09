@@ -3,7 +3,6 @@ module Main (main) where
 import Data.Bifunctor (first)
 import System.Process
 
-import Location (Location(Location))
 import Tokenizer
 import Parser
 import CodeGenerator
@@ -59,11 +58,6 @@ wasmtime file =
     readProcess "wasmtime" [file] []
 
 
-locationToString :: Location -> String
-locationToString (Location line column) =
-    show line ++ ":" ++ show column
-
-
 errorMessage :: SlangError -> String
 errorMessage (TokenizeFailure err) = tokenizeErrorMessage err
 errorMessage (ParseFailure err) = parseErrorMessage err
@@ -72,12 +66,13 @@ errorMessage (RunFailure err) = runErrorMessage err
 
 tokenizeErrorMessage :: TokenizeError -> String
 tokenizeErrorMessage (IllegalCharacter c loc) =
-    "Illegal character " ++ [c] ++ " at " ++ locationToString loc
+    "Illegal character " ++ [c] ++ " at " ++ show loc
 
 
 parseErrorMessage :: ParseError -> String
 parseErrorMessage IncompleteExpression = "Incomplete expression."
-parseErrorMessage IncompleteFunction = "Incomplete function."
+parseErrorMessage (IncompleteFunction loc) =
+    "Incomplete function @ " ++ show loc ++ "."
 parseErrorMessage MissingMain = "First function must be main."
 parseErrorMessage (Expectation desc expectation token) =
     "Unexpected token " ++ show token ++ ".\n"

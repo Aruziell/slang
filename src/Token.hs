@@ -9,10 +9,11 @@ data Token
 
 
 data Value
-    = End
+    = Begin | End
     | Equals
     | Identifier String
     | Integer Int
+    | Newline
     | ParenthesisLeft
     | ParenthesisRight
     | Plus

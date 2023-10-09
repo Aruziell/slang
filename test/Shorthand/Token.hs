@@ -4,12 +4,8 @@ import Shorthand.Location
 import Token
 
 
-_id :: String -> Token
-_id value = Token (Identifier value) _location
-
-
-_int :: Int -> Token
-_int value = Token (Integer value) _location
+_begin :: Token
+_begin = Token Begin _location
 
 
 _eq :: Token
@@ -18,6 +14,18 @@ _eq = Token Equals _location
 
 _end :: Token
 _end = Token End _location
+
+
+_id :: String -> Token
+_id value = Token (Identifier value) _location
+
+
+_int :: Int -> Token
+_int value = Token (Integer value) _location
+
+
+_newline :: Token
+_newline = Token Newline _location
 
 
 _when :: Token

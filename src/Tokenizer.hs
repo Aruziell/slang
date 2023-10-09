@@ -16,42 +16,105 @@ type TokenizeResult = Either TokenizeError [T.Token]
 type Tokenizer = String -> TokenizeResult
 
 
+data TokenizeContext
+    = TokenizeContext
+        { indent :: Int
+        , line :: Int
+        , column :: Int
+        }
+
+
+toLocation :: TokenizeContext -> L.Location
+toLocation context =
+    L.Location
+        { L.line = line context
+        , L.column = column context
+        }
+
+
+advanceBy :: Int -> TokenizeContext -> TokenizeContext
+advanceBy n context = context { column = column context + n }
+
+
+advance :: TokenizeContext -> TokenizeContext
+advance = advanceBy 1
+
+
+advanceLine :: TokenizeContext -> TokenizeContext
+advanceLine context = context { line = line context + 1, column = 0 }
+
+
+indent_ :: TokenizeContext -> TokenizeContext
+indent_ context =
+    context
+        { indent = indent context + 1
+        , column = column context + 4
+        }
+
+dedent :: TokenizeContext -> TokenizeContext
+dedent context =
+    context { indent = indent context - 1 }
+
+
+startContext :: TokenizeContext
+startContext = TokenizeContext { indent = 0, line = 0, column = 0 }
+
+
+token :: TokenizeContext -> T.Value -> T.Token
+token context value = T.Token value (toLocation context)
+
+
 tokenize :: Tokenizer
-tokenize = tokenize_ startLocation
+tokenize = tokenizeIndent startContext
 
 
-tokenize_ :: L.Location -> Tokenizer
-tokenize_ _ [] = Right []
-tokenize_ loc (' ' : rest) =
-    tokenize_ (advance loc) rest
-tokenize_ loc ('\n' : rest) =
-    (T.Token T.End loc :) <$> tokenize_ (advanceLine loc) rest
-tokenize_ loc ('(' : rest) =
-    (T.Token T.ParenthesisLeft loc :) <$> tokenize_ (advance loc) rest
-tokenize_ loc (')' : rest) =
-    (T.Token T.ParenthesisRight loc :) <$> tokenize_ (advance loc) rest
-tokenize_ loc (',' : rest) =
-    (T.Token T.Separator loc :) <$> tokenize_ (advance loc) rest
-tokenize_ loc ('=' : rest) =
-    (T.Token T.Equals loc :) <$> tokenize_ (advance loc) rest
-tokenize_ loc ('+' : rest) =
-    (T.Token T.Plus loc :) <$> tokenize_ (advance loc) rest
-tokenize_ loc ('w':'h':'e':'n' : rest) =
-    (T.Token T.When loc :) <$> tokenize_ (advance loc) rest
-tokenize_ loc ('t':'h':'e':'n' : rest) =
-    (T.Token T.Then loc :) <$> tokenize_ (advance loc) rest
-tokenize_ loc ('e':'l':'s':'e' : rest) =
-    (T.Token T.Else loc :) <$> tokenize_ (advance loc) rest
-tokenize_ loc text@(c:cs)
+tokenize_ :: TokenizeContext -> Tokenizer
+tokenize_ context []
+    | (indent context) == 0 = Right []
+    | otherwise = (token context T.End :) <$> tokenize_ (dedent context) []
+tokenize_ context (' ' : rest) =
+    tokenize_ (advance context) rest
+tokenize_ context ('\n' : rest) =
+    (token context T.Newline :) <$> tokenizeIndent (advanceLine context) rest
+tokenize_ context ('(' : rest) =
+    (token context T.ParenthesisLeft :) <$> tokenize_ (advance context) rest
+tokenize_ context (')' : rest) =
+    (token context T.ParenthesisRight :) <$> tokenize_ (advance context) rest
+tokenize_ context (',' : rest) =
+    (token context T.Separator :) <$> tokenize_ (advance context) rest
+tokenize_ context ('=' : rest) =
+    (token context T.Equals :) <$> tokenize_ (advance context) rest
+tokenize_ context ('+' : rest) =
+    (token context T.Plus :) <$> tokenize_ (advance context) rest
+tokenize_ context ('w':'h':'e':'n' : rest) =
+    (token context T.When :) <$> tokenize_ (advance context) rest
+tokenize_ context ('t':'h':'e':'n' : rest) =
+    (token context T.Then :) <$> tokenize_ (advance context) rest
+tokenize_ context ('e':'l':'s':'e' : rest) =
+    (token context T.Else :) <$> tokenize_ (advance context) rest
+tokenize_ context text@(c:cs)
     | isDigit c =
         let valueString = takeWhile isDigit text
             len = length valueString
             value = tokenizeInteger valueString
-        in ([T.Token value loc] ++) <$> tokenize_ (advanceBy len loc) (drop len text)
+        in (token context value :) <$> tokenize_ (advanceBy len context) (drop len text)
     | isLetter c = do
-        (value, len, rest) <- tokenizeIdentifier loc (c NonEmpty.:| cs)
-        ([T.Token value loc] ++) <$> tokenize_ (advanceBy len loc) rest
-tokenize_ loc (c:_) = Left (IllegalCharacter c loc)
+        (value, len, rest) <- tokenizeIdentifier (toLocation context) (c NonEmpty.:| cs)
+        ([T.Token value (toLocation context)] ++) <$> tokenize_ (advanceBy len context) rest
+tokenize_ context (c:_) = Left (IllegalCharacter c (toLocation context))
+
+
+tokenizeIndent :: TokenizeContext -> Tokenizer
+tokenizeIndent context = tokenizeIndent_ 0 context
+
+
+tokenizeIndent_ :: Int -> TokenizeContext -> Tokenizer
+tokenizeIndent_ current context (' ':' ':' ':' ' : rest)
+    | current < (indent context) = tokenizeIndent_ (current + 1) (advanceBy 4 context) rest
+    | otherwise = (token context T.Begin :) <$> tokenizeIndent_ (current + 1) (indent_ context) rest
+tokenizeIndent_ current context rest
+    | current < (indent context) = (token context T.End :) <$> tokenizeIndent_ current (dedent context) rest
+    | otherwise = tokenize_ context rest
 
 
 tokenizeInteger :: String -> T.Value
@@ -68,18 +131,3 @@ tokenizeIdentifier loc text@(c NonEmpty.:| _)
         in Right (T.Identifier value, len, rest)
     | otherwise =
         Left (IllegalCharacter c loc)
-
-
-startLocation :: L.Location
-startLocation = L.Location { L.line = 0, L.column = 0 }
-
-
-advance :: L.Location -> L.Location
-advance = advanceBy 1
-
-
-advanceBy :: Int -> L.Location -> L.Location
-advanceBy cols loc = L.Location (L.line loc) (L.column loc + cols)
-
-advanceLine :: L.Location -> L.Location
-advanceLine (L.Location line _) = L.Location (line +1) 0
