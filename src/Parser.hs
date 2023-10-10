@@ -61,7 +61,7 @@ parse tokens = do
 
 parseMain :: PartialParser S.Main
 parseMain (T.Token (T.Identifier "main") loc : T.Token T.Equals _ : exprAndRest) = do
-    (expr, rest) <- parseExpression exprAndRest
+    (expr, rest) <- indented parseExpression (trim exprAndRest)
     return (S.Main loc expr, rest)
 parseMain _ =
     Left MissingMain
@@ -78,11 +78,32 @@ parseFunctionList tokens = do
 parseFunction :: PartialParser S.Function
 parseFunction (T.Token (T.Identifier name) loc : argsAndRest) = do
     (args, eqAndRest) <- parseArgumentList argsAndRest
-    (_, exprAndRest) <- requireEquals eqAndRest
-    (expr, rest) <- parseExpression (trim exprAndRest)
+    (_, indExpr) <- requireEquals eqAndRest
+
+    (expr, rest) <- indented parseExpression (trim indExpr)
+
     return (S.Function loc name args expr, rest)
+
 parseFunction tokens =
     Left $ Expectation "while parsing function" Function (listToMaybe tokens)
+
+
+indented :: (PartialParser a) -> PartialParser a
+indented parser input = do
+    let skipped = skipBegin (trim input)
+
+    (parsed, endAndRest) <- parser skipped
+
+    (_, rest) <- if skipped /= input
+        then requireEnd (trim endAndRest)
+        else return ((), endAndRest)
+
+    return (parsed, rest)
+
+
+skipBegin :: [T.Token] -> [T.Token]
+skipBegin (T.Token T.Begin _ : rest) = rest
+skipBegin tokens = tokens
 
 
 parseArgumentList :: PartialParser [S.Argument]

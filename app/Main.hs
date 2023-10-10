@@ -11,12 +11,15 @@ import Toolchain
 
 
 input :: String
-input = concat $ map (++ "\n")
-    [ "main = fib 10"
-    , "fib n = fibn 0 n 0 1"
-    , "fibn c, n, a, b = when c"
-    , "    n then a"
-    , "    else fibn (c+1) n b (a+b)"
+input = unlines
+    [ "main ="
+    , "    fib 10"
+    , "fib n ="
+    , "    fibn 0 n 0 1"
+    , "fibn c, n, a, b ="
+    , "    when c"
+    , "        n then a"
+    , "        else fibn (c+1) n b (a+b)"
     ]
 
 
