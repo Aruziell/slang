@@ -26,6 +26,17 @@ spec = do
             , "    else i + trii (i+1) n"
             ]
         `shouldOutput` "55\n"
+    
+    it "fibonacci recursive" $
+        unlines
+            [ "main = fib 10"
+            , "fib n ="
+            , "    when n"
+            , "        0 then 0"
+            , "        1 then 1"
+            , "        else fib (n-1) + fib (n-2)"
+            ]
+        `shouldOutput` "55\n"
 
     it "fibonacci tail recursive" $
         unlines
