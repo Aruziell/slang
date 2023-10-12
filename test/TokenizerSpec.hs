@@ -96,8 +96,11 @@ spec = do
     it "equals" $ do
         tokenize "=" `shouldBeRight` [T.Token T.Equals (L.Location 0 0)]
 
-    it "plus operator" $ do
+    it "plus" $ do
         tokenize "+" `shouldBeRight` [T.Token T.Plus (L.Location 0 0)]
+
+    it "minus" $ do
+        tokenize "-" `shouldBeRight` [T.Token T.Minus (L.Location 0 0)]
     
     it "identifier" $ do
         tokenize "foo"
@@ -123,6 +126,14 @@ spec = do
             [ T.Token (T.Integer 1) (L.Location 0 0)
             , T.Token (T.Integer 2) (L.Location 0 2)
             , T.Token T.Plus (L.Location 0 4)
+            ]
+
+    it "integer subtraction" $ do
+        tokenize "1 - 2"
+        `shouldBeRight`
+            [ T.Token (T.Integer 1) (L.Location 0 0)
+            , T.Token T.Minus (L.Location 0 2)
+            , T.Token (T.Integer 2) (L.Location 0 4)
             ]
 
     it "integer column location" $ do

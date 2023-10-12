@@ -13,6 +13,7 @@ data Value
     | Equals
     | Identifier String
     | Integer Int
+    | Minus
     | Newline
     | ParenthesisLeft
     | ParenthesisRight

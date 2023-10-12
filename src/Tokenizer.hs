@@ -86,6 +86,8 @@ tokenize_ context ('=' : rest) =
     (token context T.Equals :) <$> tokenize_ (advance context) rest
 tokenize_ context ('+' : rest) =
     (token context T.Plus :) <$> tokenize_ (advance context) rest
+tokenize_ context ('-' : rest) =
+    (token context T.Minus :) <$> tokenize_ (advance context) rest
 tokenize_ context ('w':'h':'e':'n' : rest) =
     (token context T.When :) <$> tokenize_ (advance context) rest
 tokenize_ context ('t':'h':'e':'n' : rest) =
