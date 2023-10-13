@@ -17,7 +17,9 @@ data ExpressionValue
     = Literal LiteralValue
     | FunctionCall String [Expression]
     | Parenthesized Expression
+    -- TODO refactor to use BinaryOperator
     | PlusOperator Expression Expression
+    | MinusOperator Expression Expression
     -- When expr [cases] else 
     | When Expression [WhenCase] Expression
     deriving (Eq, Show)
@@ -59,3 +61,7 @@ int value = Expression (Literal (Integer value))
 
 plus :: Expression -> Expression -> Location -> Expression
 plus l r = Expression (l `PlusOperator` r)
+
+
+minus :: Expression -> Expression -> Location -> Expression
+minus l r = Expression (l `MinusOperator` r)

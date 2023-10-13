@@ -41,7 +41,31 @@ spec = do
                 , T._int 3
                 ]
             `shouldBeRight`
-                (S._int 1 `S._plus` (S._int 2 `S._plus` S._int 3), [])
+                (S._int 1 `S._plus` S._int 2 `S._plus` S._int 3, [])
+
+        it "integer subtraction" $
+            parseExpression
+                [ T._int 1
+                , T._minus
+                , T._int 2
+                ]
+            `shouldBeRight`
+                ((S._int 1 `S._minus` S._int 2), [])
+
+        it "mixed integer addition and subtraction" $
+            parseExpression
+                [ T._int 1
+                , T._minus
+                , T._int 2
+                , T._plus
+                , T._int 3
+                , T._minus
+                , T._int 4
+                ]
+            `shouldBeRight`
+                ( S._int 1 `S._minus` S._int 2
+                  `S._plus` S._int 3 `S._minus` S._int 4
+                , [])
 
         it "missing left add operand" $ do
             parseExpression [T._plus, T._int 1]

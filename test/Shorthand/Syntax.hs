@@ -28,5 +28,9 @@ _plus :: Expression -> Expression -> Expression
 _plus l r = (l `plus` r) _location
 
 
+_minus :: Expression -> Expression -> Expression
+_minus l r = (l `minus` r) _location
+
+
 _when :: Expression -> [WhenCase] -> Expression -> Expression
 _when expr cases else_ = Expression (When expr cases else_) _location

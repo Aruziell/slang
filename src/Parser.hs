@@ -33,6 +33,7 @@ data ParseError
 data Expectation
     = Function
     | Expression
+    | Term
     | Token T.Value
     deriving (Eq, Show)
 
@@ -209,7 +210,7 @@ requireThen tokens =
 
 parseAdd :: PartialParser S.Expression
 parseAdd tokens@(T.Token (T.Integer _) _ : _) = do
-    (left, addAndRest) <- parseLiteral tokens
+    (left, addAndRest) <- parseTerm tokens
     parseAddAndRest left addAndRest
 parseAdd tokens@(T.Token (T.Identifier _) _ : _) = do
     (left, addAndRest) <- parseCall tokens
@@ -220,10 +221,24 @@ parseAdd tokens =
 
 parseAddAndRest :: S.Expression -> PartialParser S.Expression
 parseAddAndRest left (T.Token T.Plus loc : rightAndRest) = do
-    (right, rest) <- parseExpression rightAndRest
-    return (S.Expression (S.PlusOperator left right) loc, rest)
-parseAddAndRest left tokens =
-    return (left, tokens)
+    (right, rest) <- parseTerm rightAndRest
+    let expr = S.Expression (S.PlusOperator left right) loc
+    parseAddAndRest expr rest
+parseAddAndRest left (T.Token T.Minus loc : rightAndRest) = do
+    (right, rest) <- parseTerm rightAndRest
+    let expr = S.Expression (S.MinusOperator left right) loc
+    parseAddAndRest expr rest
+parseAddAndRest expr tokens =
+    return (expr, tokens)
+
+
+parseTerm :: PartialParser S.Expression
+parseTerm tokens@(T.Token (T.Integer _) _ : _) =
+    parseLiteral tokens
+parseTerm tokens@(T.Token (T.Identifier _) _ : _) =
+    parseCall tokens
+parseTerm tokens =
+    Left $ expectError Term tokens
 
 
 parseLiteral :: PartialParser S.Expression
