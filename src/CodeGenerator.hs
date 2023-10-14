@@ -61,6 +61,8 @@ expressionValue locals (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)
     -- we want to generate readable code. This way we'll have operator added
     -- as soon as stack contains enough operands.
     expressionValue locals lhs ++ plusRest locals rhs
+expressionValue locals (S.MinusOperator (S.Expression lhs _) (S.Expression rhs _)) =
+    expressionValue locals lhs ++ subtractionRest locals rhs
 expressionValue locals (S.Parenthesized expr) =
     expression locals expr
 expressionValue locals (S.When expr cases else_) =
@@ -94,6 +96,13 @@ plusRest locals value =
     expressionValue locals value ++ _i32Add
 
 
+subtractionRest :: [String] -> S.ExpressionValue -> [String]
+subtractionRest locals (S.MinusOperator (S.Expression a _) (S.Expression b _)) =
+    expressionValue locals a ++ _i32Sub ++ subtractionRest locals b
+subtractionRest locals value =
+    expressionValue locals value ++ _i32Sub
+
+
 join :: String -> String -> [String] -> String
 join prefix postfix content =
     content >>= (prefix ++) . (++ postfix)
@@ -109,6 +118,10 @@ _call = (:[]) . ("call $" ++)
 
 _i32Add :: [String]
 _i32Add = ["i32.add"]
+
+
+_i32Sub :: [String]
+_i32Sub = ["i32.sub"]
 
 
 _i32Const :: Int -> [String]
