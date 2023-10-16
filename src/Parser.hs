@@ -33,6 +33,7 @@ data ParseError
 data Expectation
     = Function
     | Expression
+    | Operator
     | Term
     | Token T.Value
     deriving (Eq, Show)
@@ -145,7 +146,7 @@ parseExpression (T.Token T.When loc : exprAndRest) = do
     (_, rest) <- requireEnd (trim endAndRest)
     return (S.Expression (S.When expr cases else_) loc, rest)
 parseExpression tokens =
-    parseAdd tokens
+    parseAdditiveExpression tokens
 
 
 parseWhenCaseList :: PartialParser [S.WhenCase]
@@ -208,28 +209,36 @@ requireThen tokens =
     Left $ expectError (Token T.Then) tokens
 
 
-parseAdd :: PartialParser S.Expression
-parseAdd tokens@(T.Token (T.Integer _) _ : _) = do
+parseAdditiveExpression :: PartialParser S.Expression
+parseAdditiveExpression tokens@(T.Token (T.Integer _) _ : _) = do
     (left, addAndRest) <- parseTerm tokens
-    parseAddAndRest left addAndRest
-parseAdd tokens@(T.Token (T.Identifier _) _ : _) = do
+    parseAdditiveRest left addAndRest
+parseAdditiveExpression tokens@(T.Token (T.Identifier _) _ : _) = do
     (left, addAndRest) <- parseCall tokens
-    parseAddAndRest left addAndRest
-parseAdd tokens =
+    parseAdditiveRest left addAndRest
+parseAdditiveExpression tokens =
     Left $ expectError Expression tokens
 
 
-parseAddAndRest :: S.Expression -> PartialParser S.Expression
-parseAddAndRest left (T.Token T.Plus loc : rightAndRest) = do
-    (right, rest) <- parseTerm rightAndRest
-    let expr = S.Expression (S.PlusOperator left right) loc
-    parseAddAndRest expr rest
-parseAddAndRest left (T.Token T.Minus loc : rightAndRest) = do
-    (right, rest) <- parseTerm rightAndRest
-    let expr = S.Expression (S.MinusOperator left right) loc
-    parseAddAndRest expr rest
-parseAddAndRest expr tokens =
-    return (expr, tokens)
+parseAdditiveRest :: S.Expression -> PartialParser S.Expression
+parseAdditiveRest left tokens = do
+    (bop, rightAndRest) <- maybeBinaryOperator tokens
+    case bop of
+        Just op -> do
+            (right, rest) <- parseTerm rightAndRest
+            let expr = S.Expression (S.BinaryOperator op left right) (S.operatorLocation op)
+            parseAdditiveRest expr rest
+        Nothing ->
+            return (left, tokens)
+
+
+maybeBinaryOperator :: PartialParser (Maybe S.Operator)
+maybeBinaryOperator (T.Token T.Plus loc : rest) =
+    return (Just $ S.Add loc, rest)
+maybeBinaryOperator (T.Token T.Minus loc : rest) =
+    return (Just $ S.Sub loc, rest)
+maybeBinaryOperator tokens =
+    return (Nothing, tokens)
 
 
 parseTerm :: PartialParser S.Expression

@@ -56,13 +56,11 @@ expressionValue locals (S.FunctionCall name exprList) =
         call = ((if name `elem` locals then _localGet else _call) name)
 expressionValue _ (S.Literal (S.Integer value)) =
     _i32Const value
-expressionValue locals (S.PlusOperator (S.Expression lhs _) (S.Expression rhs _)) =
+expressionValue locals (S.BinaryOperator op (S.Expression lhs _) (S.Expression rhs _)) =
     -- While it is possible to generate both expressions and then add operator,
     -- we want to generate readable code. This way we'll have operator added
     -- as soon as stack contains enough operands.
-    expressionValue locals lhs ++ plusRest locals rhs
-expressionValue locals (S.MinusOperator (S.Expression lhs _) (S.Expression rhs _)) =
-    expressionValue locals lhs ++ subtractionRest locals rhs
+    expressionValue locals lhs ++ binaryOperatorRest locals op rhs
 expressionValue locals (S.Parenthesized expr) =
     expression locals expr
 expressionValue locals (S.When expr cases else_) =
@@ -89,18 +87,17 @@ whenCaseList locals ((expr, result) : rest) =
     ] ++ whenCaseList locals rest
 
 
-plusRest :: [String] -> S.ExpressionValue -> [String]
-plusRest locals (S.PlusOperator (S.Expression a _) (S.Expression b _)) =
-    expressionValue locals a ++ _i32Add ++ plusRest locals b
-plusRest locals value =
-    expressionValue locals value ++ _i32Add
+binaryOperatorRest :: [String] -> S.Operator -> S.ExpressionValue -> [String]
+binaryOperatorRest locals op (S.BinaryOperator rop (S.Expression a _) (S.Expression b _)) =
+    expressionValue locals a ++ operator op ++ binaryOperatorRest locals rop b
+binaryOperatorRest locals op value =
+    expressionValue locals value ++ operator op
 
 
-subtractionRest :: [String] -> S.ExpressionValue -> [String]
-subtractionRest locals (S.MinusOperator (S.Expression a _) (S.Expression b _)) =
-    expressionValue locals a ++ _i32Sub ++ subtractionRest locals b
-subtractionRest locals value =
-    expressionValue locals value ++ _i32Sub
+
+operator :: S.Operator -> [String]
+operator (S.Add _) = _i32Add
+operator (S.Sub _) = _i32Sub
 
 
 join :: String -> String -> [String] -> String
