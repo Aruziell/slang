@@ -11,6 +11,7 @@ data Token
 data Value
     = Begin | End
     | Equals
+    | GreaterThan
     | Identifier String
     | Integer Int
     | Minus

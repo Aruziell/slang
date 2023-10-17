@@ -102,6 +102,9 @@ spec = do
     it "minus" $ do
         tokenize "-" `shouldBeRight` [T.Token T.Minus (L.Location 0 0)]
     
+    it "greater than" $ do
+        tokenize ">" `shouldBeRight` [T.Token T.GreaterThan (L.Location 0 0)]
+    
     it "identifier" $ do
         tokenize "foo"
         `shouldBeRight`
