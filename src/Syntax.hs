@@ -18,6 +18,7 @@ data ExpressionValue
     | FunctionCall String [Expression]
     | Parenthesized Expression
     | BinaryOperator Operator Expression Expression
+    | Logical ComparisonOperator Expression Expression
     -- When expr [cases] else
     | When Expression [WhenCase] Expression
     deriving (Eq, Show)
@@ -32,6 +33,15 @@ data Operator
 operatorLocation :: Operator -> Location
 operatorLocation (Add loc) = loc
 operatorLocation (Sub loc) = loc
+
+
+data ComparisonOperator
+    = GreaterThan Location
+    deriving (Eq, Show)
+
+
+comparisonLocation :: ComparisonOperator -> Location
+comparisonLocation (GreaterThan loc) = loc
 
 
 type WhenCase = (Expression, Expression)
@@ -62,6 +72,10 @@ data Argument =
 
 call :: String -> [Expression] -> Location -> Expression
 call name exprList = Expression (FunctionCall name exprList)
+
+
+gt :: Expression -> Expression -> Location -> Expression
+gt l r loc = Expression (Logical (GreaterThan loc) l r) loc
 
 
 int :: Int -> Location -> Expression

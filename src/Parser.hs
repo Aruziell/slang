@@ -146,7 +146,7 @@ parseExpression (T.Token T.When loc : exprAndRest) = do
     (_, rest) <- requireEnd (trim endAndRest)
     return (S.Expression (S.When expr cases else_) loc, rest)
 parseExpression tokens =
-    parseAdditiveExpression tokens
+    parseComparison tokens
 
 
 parseWhenCaseList :: PartialParser [S.WhenCase]
@@ -207,6 +207,31 @@ requireThen (T.Token T.Then _ : rest) =
     return ((), rest)
 requireThen tokens =
     Left $ expectError (Token T.Then) tokens
+
+
+parseComparison :: PartialParser S.Expression
+parseComparison tokens = do
+    (left, opAndRest) <- parseAdditiveExpression tokens
+    parseComparisonRest left opAndRest
+
+
+parseComparisonRest :: S.Expression -> PartialParser S.Expression
+parseComparisonRest left tokens = do
+    (op, rest) <- maybeComparisonOperator tokens
+    case op of
+        Just op -> do
+            (right, rest) <- parseAdditiveExpression rest
+            let expr = S.Expression (S.Logical op left right) (S.comparisonLocation op)
+            parseComparisonRest expr rest
+        Nothing ->
+            return (left, tokens)
+
+
+maybeComparisonOperator :: PartialParser (Maybe S.ComparisonOperator)
+maybeComparisonOperator (T.Token T.GreaterThan loc : rest) =
+    return (Just $ S.GreaterThan loc, rest)
+maybeComparisonOperator tokens =
+    return (Nothing, tokens)
 
 
 parseAdditiveExpression :: PartialParser S.Expression

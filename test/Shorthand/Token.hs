@@ -24,6 +24,10 @@ _int :: Int -> Token
 _int value = Token (Integer value) _location
 
 
+_gt :: Token
+_gt = Token GreaterThan _location
+
+
 _minus :: Token
 _minus = Token Minus _location
 

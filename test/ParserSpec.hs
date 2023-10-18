@@ -67,6 +67,25 @@ spec = do
                   `S._plus` S._int 3 `S._minus` S._int 4
                 , [])
 
+        describe "logical" $ do
+
+            it "greater than" $
+                parseExpression [T._int 1, T._gt, T._int 2]
+                `shouldBeRight` (S._gt (S._int 1) (S._int 2), [])
+
+            it "greater than additives" $
+                parseExpression
+                    [ T._int 1, T._plus, T._int 2
+                    , T._gt
+                    , T._int 3, T._minus, T._int 4
+                    ]
+                `shouldBeRight`
+                    ( (S._int 1 `S._plus` S._int 2)
+                        `S._gt`
+                        (S._int 3 `S._minus` S._int 4)
+                    , []
+                    )
+
         it "missing left add operand" $ do
             parseExpression [T._plus, T._int 1]
             `shouldSatisfy` isLeft
