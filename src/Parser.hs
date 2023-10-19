@@ -80,7 +80,7 @@ parseFunctionList tokens = do
 parseFunction :: PartialParser S.Function
 parseFunction (T.Token (T.Identifier name) loc : argsAndRest) = do
     (args, eqAndRest) <- parseArgumentList argsAndRest
-    (_, indExpr) <- requireEquals eqAndRest
+    (_, indExpr) <- require T.Equals eqAndRest
 
     (expr, rest) <- indented parseExpression (trim indExpr)
 
@@ -97,7 +97,7 @@ indented parser input = do
     (parsed, endAndRest) <- parser skipped
 
     (_, rest) <- if skipped /= input
-        then requireEnd (trim endAndRest)
+        then require T.End (trim endAndRest)
         else return ((), endAndRest)
 
     return (parsed, rest)
@@ -136,14 +136,14 @@ parseArgument tokens =
 parseExpression :: PartialParser S.Expression
 parseExpression (T.Token T.ParenthesisLeft loc : exprAndRest) = do
     (expr, closeAndRest) <- parseExpression exprAndRest
-    (_, rest) <- requireParClose closeAndRest
+    (_, rest) <- require T.ParenthesisRight closeAndRest
     return (S.Expression (S.Parenthesized expr) loc, rest)
 parseExpression (T.Token T.When loc : exprAndRest) = do
     (expr, beginAndRest) <- parseExpression exprAndRest
-    (_, casesAndRest) <- requireBegin (trim beginAndRest)
+    (_, casesAndRest) <- require T.Begin (trim beginAndRest)
     (cases, elseAndRest) <- parseWhenCaseList casesAndRest
     (else_, endAndRest) <- parseElse (trim elseAndRest)
-    (_, rest) <- requireEnd (trim endAndRest)
+    (_, rest) <- require T.End (trim endAndRest)
     return (S.Expression (S.When expr cases else_) loc, rest)
 parseExpression tokens =
     parseComparison tokens
@@ -161,7 +161,7 @@ parseWhenCaseList tokens = do
 parseWhenCase :: PartialParser (S.Expression, S.Expression)
 parseWhenCase tokens = do
     (case_, thenAndRest) <- parseExpression tokens
-    (_, resAndRest) <- requireThen thenAndRest
+    (_, resAndRest) <- require T.Then thenAndRest
     (result, rest) <- parseExpression resAndRest
     return ((case_, result), rest)
 
@@ -174,39 +174,11 @@ parseElse tokens =
     Left $ expectError (Token T.Else) tokens
 
 
-requireBegin :: PartialParser ()
-requireBegin (T.Token T.Begin _ : rest) =
-    return ((), rest)
-requireBegin tokens =
-    Left $ expectError (Token T.Begin) tokens
-
-
-requireEnd :: PartialParser ()
-requireEnd (T.Token T.End _ : rest) =
-    return ((), rest)
-requireEnd tokens =
-    Left $ expectError (Token T.End) tokens
-
-
-requireEquals :: PartialParser ()
-requireEquals (T.Token T.Equals _ : rest) =
-    return ((), rest)
-requireEquals tokens =
-    Left $ expectError (Token T.Equals) tokens
-
-
-requireParClose :: PartialParser ()
-requireParClose (T.Token T.ParenthesisRight _ : rest) =
-    return ((), rest)
-requireParClose tokens =
-    Left $ expectError (Token T.ParenthesisRight) tokens
-
-
-requireThen :: PartialParser ()
-requireThen (T.Token T.Then _ : rest) =
-    return ((), rest)
-requireThen tokens =
-    Left $ expectError (Token T.Then) tokens
+require :: T.Value -> PartialParser ()
+require v [] = Left $ expectError (Token v) []
+require v tokens@(T.Token value _ : rest)
+    | v == value = return ((), rest)
+    | otherwise = Left $ expectError (Token v) tokens
 
 
 parseComparison :: PartialParser S.Expression
