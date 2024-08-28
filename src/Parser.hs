@@ -90,7 +90,7 @@ parseFunction tokens =
     Left $ Expectation "while parsing function" Function (listToMaybe tokens)
 
 
-indented :: (PartialParser a) -> PartialParser a
+indented :: PartialParser a -> PartialParser a
 indented parser input = do
     let skipped = skipBegin (trim input)
 

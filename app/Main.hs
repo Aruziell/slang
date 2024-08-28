@@ -13,13 +13,12 @@ import Toolchain
 input :: String
 input = unlines
     [ "main ="
-    , "    fib 10"
+    , "    fib 46"
     , "fib n ="
-    , "    fibn 0 n 0 1"
-    , "fibn c, n, a, b ="
-    , "    when c"
-    , "        n then a"
-    , "        else fibn (c+1) n b (a+b)"
+    , "    when n"
+    , "        0 then 0"
+    , "        1 then 1"
+    , "        else fib (n - 1) + fib (n - 2)"
     ]
 
 
@@ -36,8 +35,8 @@ main = do
     let parseAction = noOutput $ first ParseFailure $ parse tokens
     ast <- logActionEither "Parse" $ return parseAction
 
-    let generateWatAction = outputResult <$> program <$> ast
-    wat <- logActionEither "Generate WAT" $ generateWatAction
+    let generateWatAction = outputResult . program <$> ast
+    wat <- logActionEither "Generate WAT" generateWatAction
 
     let writeFileAction = noOutputIO $ writeFile "main.wat" wat
     _ <- logAction "Write WAT file" writeFileAction
