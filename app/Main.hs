@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Data.Bifunctor (first)
+import Data.Time.Clock.System
 import System.Process
 
 import Tokenizer
@@ -95,12 +96,14 @@ logActionEither name action = do
 
     putStr $ info name ++ ".."
 
-    case action of
+    (time, result) <- measureTime (return action)
+
+    case result of
         Left err -> do
-            putStrLn " ✘"
+            putStrLn $ " ✘ " ++ time
             fail $ errorMessage err
         Right (result, output) -> do
-            putStrLn " ✔"
+            putStrLn $ " ✔ " ++ time
             case output of
                 "" ->
                     return result
@@ -114,8 +117,8 @@ logAction name action = do
     let info message = "σ " ++ message
 
     putStr $ info name ++ ".."
-    (result, output) <- action
-    putStrLn " ✔"
+    (time, (result, output)) <- measureTime action
+    putStrLn $ " ✔ " ++ time
 
     case output of
         "" -> return ()
@@ -123,3 +126,25 @@ logAction name action = do
             putStrLn . unlines $ map ("> " ++) (lines output)
 
     return result
+
+
+measureTime :: IO a -> IO (String, a)
+measureTime f = do
+    start <- systemTimeToSeconds <$> getSystemTime
+    result <- f
+    finish <- systemTimeToSeconds <$> getSystemTime
+    let diff = finish - start
+    let diffText = secondsToText diff
+    return (diffText, result)
+
+
+systemTimeToSeconds :: SystemTime -> Double
+systemTimeToSeconds time =
+    realToFrac (systemSeconds time) + realToFrac (systemNanoseconds time) / 1e9
+
+
+secondsToText :: Double -> String
+secondsToText seconds
+    | seconds < 1e-3 = show (round $ seconds * 1e6) ++ "μs"
+    | seconds < 1 = show (round $ seconds * 1e3) ++ "ms"
+    | otherwise = show (round seconds) ++ "s"
